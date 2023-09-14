@@ -2,5 +2,5 @@ from enum import Enum
 
 
 class HitType(Enum):
-    Film = "Film"
+    Movie = "Film"
     Series = "Series"

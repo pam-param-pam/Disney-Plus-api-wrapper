@@ -36,6 +36,10 @@ class Season:
             episode.format = episode_json["mediaMetadata"]["format"]
             episode.rating = episode_json["ratings"][0]["value"]
             episode.contentId = episode_json["contentId"]
+            episode.briefDescription = episode_json["text"]["description"]["brief"]["program"]["default"]["content"]
+            episode.mediumDescription = episode_json["text"]["description"]["medium"]["program"]["default"]["content"]
+            episode.fullDescription = episode_json["text"]["description"]["full"]["program"]["default"]["content"]
+
             audioTracks, captions = parseAudioCaptions(episode_json)
 
             episode.captions = captions

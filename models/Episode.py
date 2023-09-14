@@ -15,6 +15,11 @@ class Episode:
         self.audioTracks = None
         self.captions = None
 
+        self.briefDescription = None
+        self.mediumDescription = None
+        self.fullDescription = None
+
+
     def __str__(self):
         return f"[Title={self.title}, Id={self.id}, Number={self.number}]"
 

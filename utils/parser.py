@@ -82,7 +82,7 @@ def parseHits(hits_json, search=False):
             isProgram = False
             title = hit_json["text"]["title"]["full"]["series"]["default"]["content"]
         if isProgram:
-            hitType = HitType.Film
+            hitType = HitType.Movie
             hit = Movie(title=title, id=id, type=hitType)
 
             hit.internalTitle = hit_json["internalTitle"]
