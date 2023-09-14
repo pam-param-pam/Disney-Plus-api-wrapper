@@ -235,7 +235,3 @@ class DisneyAPI(object):
         self.account = account
 
 
-api = DisneyAPI(email="jedrzej.malachowski@gmail.com", password="Jedrek06@")
-api.setLanguage(Language.English)
-
-print(api.search("clone wars")[0].getSeasons()[0].getEpisodes()[0].audioTracks)
