@@ -14,8 +14,9 @@ logger.setLevel(logging.DEBUG)
 
 
 class Login(object):
-    def __init__(self, email, password, proxies=False):
+    def __init__(self, email, password, proxies, forceLogin):
         self._email = email
+        self._forceLogin = forceLogin
         self._password = password
         self._web_page = 'https://www.disneyplus.com/login'
         self._devices_url = "https://disney.api.edge.bamgrid.com/devices"
@@ -164,6 +165,9 @@ class Login(object):
 
     def getAuthToken(self):
         APIConfig.session = self._session
+        if self._forceLogin:
+            self._getAuthTokenTruApi()
+            return
         try:
             with open("token.json", "r") as file:
 
