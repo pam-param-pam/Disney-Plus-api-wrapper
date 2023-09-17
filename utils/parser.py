@@ -115,14 +115,14 @@ def parseHits(hits_json, search=False):
 
     return hits
 
-def parseAudioCaptions(string_json):
+def parseAudioCaptions(string_json, mediaId):
     audioTracks = []
     for audioTrack in string_json["mediaMetadata"]["audioTracks"]:
         features = audioTrack["features"]
         language = audioTrack["language"]
         name = audioTrack["renditionName"]
         trackType = audioTrack["trackType"]
-        audioTrack = AudioTrack(features=features, name=name, language=language, trackType=trackType)
+        audioTrack = AudioTrack(features=features, name=name, mediaId=mediaId, language=language, trackType=trackType)
         audioTracks.append(audioTrack)
 
     captions = []
@@ -130,7 +130,7 @@ def parseAudioCaptions(string_json):
         language = audioTrack["language"]
         name = audioTrack["renditionName"]
         trackType = audioTrack["trackType"]
-        caption = Caption(name=name, language=language, trackType=trackType)
+        caption = Caption(name=name, language=language, mediaId=mediaId, trackType=trackType)
         captions.append(caption)
 
     return audioTracks, captions

@@ -13,6 +13,7 @@ class APIConfig(object):
     sessionId = None
     _instance = None
     _lock = threading.Lock()
+    default_path = "download"
 
     def __new__(cls):
         if cls._instance is None:

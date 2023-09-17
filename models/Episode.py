@@ -1,9 +1,13 @@
+
+
 class Episode:
     def __init__(self, id, number: int, title, videoId):
         self.id = id
         self.number = number
         self.title = title
         self.videoId = videoId
+
+        self.seasonNumber = None
         self.internalTitle = None
         self.mediaId = None
         self.length = None

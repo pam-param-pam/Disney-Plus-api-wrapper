@@ -8,7 +8,9 @@ from Exceptions import ApiException
 from Login import Login
 from models.Account import Account
 from models.Language import Language
+from models.Movie import Movie
 from models.Rating import Rating
+from models.Series import Series
 from utils.parser import parseHits, parseProfile
 
 logging.basicConfig()
@@ -41,10 +43,20 @@ class DisneyAPI(object):
             raise ApiException(res)
         return parseHits(res.json()["data"]["search"]["hits"], True)
 
+    def searchMovies(self, query, rating: Rating = Rating.Adult):
+
+
+        return [item for item in self.search( query, rating) if isinstance(item, Movie)]
+
+    def searchSeries(self, query, rating: Rating = Rating.Adult):
+
+        return [item for item in self.search(query, rating) if isinstance(item, Series)]
 
     def setLanguage(self, language: Language):
         APIConfig.language = language.value
 
+    def changeDownloadPath(self, path):
+        APIConfig.default_path = path
     def getProfiles(self):
         graphql_query = {
             "query": """
@@ -131,7 +143,6 @@ class DisneyAPI(object):
         profile = res.json()["data"]["me"]["account"]["activeProfile"]
         return parseProfile(profile)
 
-
     def setActiveProfile(self, profileId):
         graphql_mutation = {
             "query": """
@@ -188,6 +199,9 @@ class DisneyAPI(object):
         self.deviceId = sess_json["device"]["id"]
         self.devicePlatform = sess_json["device"]["platform"]
 
+    def getToken(self):
+        return APIConfig.token
+
     def AccountInit(self):
         graphql_query = {
             "query": """
@@ -233,5 +247,3 @@ class DisneyAPI(object):
 
         account = Account(id=id, email=email, createdAt=createdAt, country=country, isEmailVerified=emailVerified)
         self.account = account
-
-

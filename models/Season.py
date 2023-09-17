@@ -1,5 +1,6 @@
 from Config import APIConfig
 from Exceptions import ApiException
+
 from models.Episode import Episode
 from utils.parser import parseAudioCaptions
 
@@ -29,6 +30,7 @@ class Season:
             videoId = episode_json["videoId"]
             episode = Episode(id=id, number=number, title=title, videoId=videoId)
 
+            episode.seasonNumber = self.number
             episode.internalTitle = episode_json["internalTitle"]
             episode.mediaId = episode_json["mediaMetadata"]["mediaId"]
             episode.originalLanguage = episode_json["originalLanguage"]
@@ -40,7 +42,7 @@ class Season:
             episode.mediumDescription = episode_json["text"]["description"]["medium"]["program"]["default"]["content"]
             episode.fullDescription = episode_json["text"]["description"]["full"]["program"]["default"]["content"]
 
-            audioTracks, captions = parseAudioCaptions(episode_json)
+            audioTracks, captions = parseAudioCaptions(episode_json, episode.mediaId)
 
             episode.captions = captions
             episode.audioTracks = audioTracks

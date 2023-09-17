@@ -47,7 +47,7 @@ class Movie(Hit):
         self._producers = producers
         self._creators = creators
 
-        audioTracks, captions = parseAudioCaptions(res_json["video"])
+        audioTracks, captions = parseAudioCaptions(res_json["video"], self.mediaId)
 
         self._captions = captions
         self._audioTracks = audioTracks
