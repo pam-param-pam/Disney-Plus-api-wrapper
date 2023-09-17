@@ -1,23 +1,27 @@
 
 # Disney+ API wrapper
 
-A future rich api wrapper for Disney+ made with python
+A future rich api wrapper for Disney+ made with python.
 
 
-
+## Requirements
+```
+pip install pysubs2==1.6.1
+pip install m3u8==3.6.0
+pip install requests
+```
 
 ## Usage/Examples
 
-Simple search
+### Simple search
 ```python
 from DisneyAPI import DisneyAPI
 
 api = DisneyAPI(email="email", password="password")
 searches = api.search("Star wars")
 print(searches[0].title) # prints title of the first search hit
-
 ```
-Advanced usage
+### Advanced usage
 
 ```python
 from DisneyAPI import DisneyAPI
@@ -33,9 +37,9 @@ profileId = api.get_profiles()[0].id  # grabs the first profile's id
 print(api.set_active_profile(profileId))
 print(api.get_active_profile())
 
-api.set_language(Language.Polish)  # sets language to Polish, from now all data will be returned in that language
+api.set_language(Language.POLISH)  # sets language to Polish, from now all data will be returned in that language
 
-searches = api.search("Star wars", rating=Rating.Age9Plus)
+searches = api.search("Star wars", rating=Rating.AGE9PLUS)
 print(searches[0].title)
 
 # checks if the search hit is a series or a movie
@@ -51,7 +55,7 @@ if searches[0].type == HitType.MOVIE:
 
 ```
 
-Downloading subtitles
+### Downloading subtitles
 
 ```python
 # by default download path is downloads/
@@ -62,7 +66,7 @@ for sub in subs:
     if sub.language == "pl":
         sub.download(name="name")
 ```
-Downloading audio
+### Downloading audio
 
 ```python
 search = api.search_series("marvel")[0].get_seasons()[0].get_episodes()[0]
@@ -71,8 +75,15 @@ for audio in audios:
     if audio.language == "pl":
         audio.download(name="name", quality="max")  # allowed max or min, feel free to make a PR to add custom ones
 ```
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first
+to discuss what you would like to change.
 
 ## Disclaimer
 
 This project can only be used for educational purposes. Using this software for malicious intent is illegal, and any damages from misuse of this software will not be the responsibility of the author.
 
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
