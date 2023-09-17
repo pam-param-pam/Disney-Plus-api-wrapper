@@ -1,66 +1,61 @@
 from Config import APIConfig
 from Exceptions import ApiException
-from models.AudioTrack import AudioTrack
-from models.Caption import Caption
 from models.Hit import Hit
 from models.HitType import HitType
-from utils.parser import parseParticipants, parseHits, parseAudioCaptions
+from utils.parser import parse_participants, parse_hits, parse_audio_and_subtitles
 
 
 class Movie(Hit):
 
-    def __init__(self, title, id, type: HitType):
-        super().__init__(title, id, type)
+    def __init__(self, title, movie_id, hit_type: HitType):
+        super().__init__(title, movie_id, hit_type)
         self.length = None
-        self.mediaId = None
+        self.media_id = None
         self.format = None
-        self._captions = None
-        self._audioTracks = None
-        self.internalTitle = None
+        self._subtitles = None
+        self._audio_tracks = None
+        self.internal_title = None
 
     @property
-    def captions(self):
-        if not self._cast:
-            self._getMoreData()
-        return self._captions
+    def subtitles(self):
+        if not self._subtitles:
+            self._get_more_data()
+        return self._subtitles
 
     @property
-    def audioTracks(self):
-        if not self._audioTracks:
-            self._getMoreData()
-        return self._audioTracks
+    def audio_tracks(self):
+        if not self._audio_tracks:
+            self._get_more_data()
+        return self._audio_tracks
 
-    def _getMoreData(self):
+    def _get_more_data(self):
         res = APIConfig.session.get(
-            f"https://disney.content.edge.bamgrid.com/svc/content/DmcVideoBundle/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/encodedFamilyId/{self.encodedFamilyId}",
+            f"https://disney.content.edge.bamgrid.com/svc/content/DmcVideoBundle/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/encodedFamilyId/{self.encoded_family_id}",
             headers={"authorization": "Bearer " + APIConfig.token})
         if res.status_code != 200:
             raise ApiException(res)
         res_json = res.json()["data"]["DmcVideoBundle"]
-        self._briefDescription = res_json["video"]["text"]["description"]["brief"]["program"]["default"]["content"]
-        self._mediumDescription = res_json["video"]["text"]["description"]["medium"]["program"]["default"]["content"]
-        self._fullDescription = res_json["video"]["text"]["description"]["full"]["program"]["default"]["content"]
+        self._brief_description = res_json["video"]["text"]["description"]["brief"]["program"]["default"]["content"]
+        self._medium_description = res_json["video"]["text"]["description"]["medium"]["program"]["default"]["content"]
+        self._full_description = res_json["video"]["text"]["description"]["full"]["program"]["default"]["content"]
         self.images = res_json["video"]["image"]
-        actors, directors, producers, creators = parseParticipants(res_json["video"]["participant"])
+        actors, directors, producers, creators = parse_participants(res_json["video"]["participant"])
         self._cast = actors
         self._directors = directors
         self._producers = producers
         self._creators = creators
 
-        audioTracks, captions = parseAudioCaptions(res_json["video"], self.mediaId)
+        audio_tracks, subtitles = parse_audio_and_subtitles(res_json["video"], self.media_id)
 
-        self._captions = captions
-        self._audioTracks = audioTracks
+        self._subtitles = subtitles
+        self._audio_tracks = audio_tracks
 
-    def getRelated(self):
+    def get_related(self):
 
         res = APIConfig.session.get(
-            f"https://disney.content.edge.bamgrid.com/svc/content/RelatedItems/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/encodedFamilyId/{self.encodedFamilyId}",
-            headers={"authorization": "Bearer " + APIConfig.token})
+            f"https://disney.content.edge.bamgrid.com/svc/content/RelatedItems/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/encodedFamilyId/{self.encoded_family_id}",
+            headers={"authorization": "Bearer " + APIConfig.token}, timeout=10)
         if res.status_code != 200:
             raise ApiException(res)
 
-        return parseHits(res.json()["data"]["RelatedItems"]["items"])
-
-    def download(self):
-        pass
+        return parse_hits(res.json()["data"]["RelatedItems"]["items"])

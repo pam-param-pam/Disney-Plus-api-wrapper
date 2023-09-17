@@ -3,13 +3,13 @@ from models.LanguagePreferences import LanguagePreferences
 
 
 class Profile:
-    def __init__(self, id, name, kidsMode, isDefault):
-        self.id = id
+    def __init__(self, profile_id, name, kids_mode, is_default):
+        self.id = profile_id
         self.name = name
-        self.kidsMode = kidsMode
+        self.kids_mode = kids_mode
         self.avatar = Avatar()
-        self.isDefault = isDefault
-        self.languagePreferences = LanguagePreferences()
+        self.is_default = is_default
+        self.language_preferences = LanguagePreferences()
 
     def __str__(self):
         return self.name

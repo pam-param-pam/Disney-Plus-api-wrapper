@@ -10,9 +10,8 @@ from Exceptions import ApiException
 
 class Downloadable(ABC):
 
-    def __init__(self, mediaId):
-        self.default_path = APIConfig.default_path
-        self.mediaId = mediaId
+    def __init__(self, media_id):
+        self.media_id = media_id
 
     @abstractmethod
     def download(self):
@@ -56,18 +55,21 @@ class Downloadable(ABC):
 
         return res.json()['stream']['sources'][0]['complete']["url"]
 
-    def parse_m3u(self, m3u_link, language):
+    def parse_m3u(self, m3u_link, language, quality):
         base_url = os.path.dirname(m3u_link)
-
         subtitle = {}
         audio = {}
         playlists = m3u8.load(uri=m3u_link).playlists
 
         quality_list = [
             playlist.stream_info.bandwidth for playlist in playlists]
-        best_quality = quality_list.index(min(quality_list))
-        for media in playlists[best_quality].media:
-            print(media)
+
+        if quality.lower() == "max":
+            quality = quality_list.index(max(quality_list))
+        else:
+            quality = quality_list.index(min(quality_list))
+
+        for media in playlists[quality].media:
             if media.language == language:
 
                 if media.type == 'SUBTITLES' and media.group_id == 'sub-main':
@@ -77,14 +79,17 @@ class Downloadable(ABC):
                     segments = m3u8.load(subtitle['m3u8_url'])
                     for uri in segments.files:
                         subtitle['urls'].append(urljoin(segments.base_uri, uri))
+                        break
 
-                if media.type == 'AUDIO' and 'Audio Description' not in media.name:
-                    audio = {'url': f'{base_url}/{media.uri}'}
-                    if media.group_id == 'eac-3':
-                        audio['extension'] = '.eac3'
-                    elif media.group_id in ['aac-128k', 'aac-64k']:
-                        audio['url'] = f'{base_url}/{media.uri}'
-                        audio['extension'] = '.aac'
-                    audio['lang'] = media.language
+        for media in playlists[quality].media:
+            if media.type == 'AUDIO' and 'Audio Description' not in media.name:
+                audio = {'url': f'{base_url}/{media.uri}'}
+                if media.group_id == 'eac-3':
+                    audio['extension'] = '.eac3'
+                elif media.group_id in ['aac-128k', 'aac-64k']:
+                    audio['url'] = f'{base_url}/{media.uri}'
+                    audio['extension'] = '.aac'
+                audio['lang'] = media.language
+                break
 
         return subtitle, audio

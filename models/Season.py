@@ -2,50 +2,49 @@ from Config import APIConfig
 from Exceptions import ApiException
 
 from models.Episode import Episode
-from utils.parser import parseAudioCaptions
+from utils.parser import parse_audio_and_subtitles
 
 
 class Season:
-    def __init__(self, id, number: int):
-        self.encodedSeriesId = None
-        self.seriesId = None
-        self.releaseDate = None
-        self.releaseYear = None
+    def __init__(self, season_id: str, number: int):
+        self.encoded_series_id = None
+        self.series_id = None
+        self.release_date = None
+        self.release_year = None
         self.rating = None
-        self.id = id
+        self.id = season_id
         self.number = number
 
-    def getEpisodes(self):
+    def get_episodes(self):
         res = APIConfig.session.get(
             f"https://disney.content.edge.bamgrid.com/svc/content/DmcEpisodes/version/5.1/region/{APIConfig.region}/audience/false/maturity/1850/language/{APIConfig.language}/seasonId/{self.id}/pageSize/60/page/1",
-            headers={"authorization": "Bearer " + APIConfig.token})
+            headers={"authorization": "Bearer " + APIConfig.token}, timeout=10)
 
         if res.status_code != 200:
             raise ApiException(res)
         episodes = []
         for episode_json in res.json()["data"]["DmcEpisodes"]["videos"]:
-            id = episode_json["contentId"]
+            content_id = episode_json["contentId"]
             number = episode_json["episodeSeriesSequenceNumber"]
             title = episode_json["text"]["title"]["full"]["program"]["default"]["content"]
-            videoId = episode_json["videoId"]
-            episode = Episode(id=id, number=number, title=title, videoId=videoId)
+            video_id = episode_json["videoId"]
+            episode = Episode(content_id=content_id, number=number, title=title, video_id=video_id)
 
-            episode.seasonNumber = self.number
-            episode.internalTitle = episode_json["internalTitle"]
-            episode.mediaId = episode_json["mediaMetadata"]["mediaId"]
-            episode.originalLanguage = episode_json["originalLanguage"]
+            episode.season_number = self.number
+            episode.internal_title = episode_json["internalTitle"]
+            episode.media_id = episode_json["mediaMetadata"]["mediaId"]
+            episode.original_language = episode_json["originalLanguage"]
             episode.length = episode_json["mediaMetadata"]["runtimeMillis"]
             episode.format = episode_json["mediaMetadata"]["format"]
             episode.rating = episode_json["ratings"][0]["value"]
-            episode.contentId = episode_json["contentId"]
-            episode.briefDescription = episode_json["text"]["description"]["brief"]["program"]["default"]["content"]
-            episode.mediumDescription = episode_json["text"]["description"]["medium"]["program"]["default"]["content"]
-            episode.fullDescription = episode_json["text"]["description"]["full"]["program"]["default"]["content"]
+            episode.brief_description = episode_json["text"]["description"]["brief"]["program"]["default"]["content"]
+            episode.medium_description = episode_json["text"]["description"]["medium"]["program"]["default"]["content"]
+            episode.full_description = episode_json["text"]["description"]["full"]["program"]["default"]["content"]
 
-            audioTracks, captions = parseAudioCaptions(episode_json, episode.mediaId)
+            audio_tracks, captions = parse_audio_and_subtitles(episode_json, episode.media_id)
 
-            episode.captions = captions
-            episode.audioTracks = audioTracks
+            episode.subtitles = captions
+            episode.audio_tracks = audio_tracks
             episodes.append(episode)
         return episodes
 

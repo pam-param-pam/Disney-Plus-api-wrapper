@@ -1,35 +1,34 @@
 import logging
-import profile
 
 from models.Actor import Actor
 from models.AudioTrack import AudioTrack
-from models.Caption import Caption
 from models.HitType import HitType
 
 from models.Participant import Participant
 from models.Profile import Profile
+from models.Subtitles import Subtitles
 
 logger = logging.getLogger('Parser')
 logger.setLevel(logging.DEBUG)
 
 
-def parseParticipants(participants_json):
+def parse_participants(participants_json):
     def extract_participants(participants_json, participant_type):
         participants = []
         try:
             for participant in participants_json.get(participant_type, []):
-                displayName = participant["displayName"]
+                display_name = participant["displayName"]
                 order = participant["order"]
-                id = participant["participantId"]
-                sortName = participant["sortName"]
+                participant_id = participant["participantId"]
+                sort_name = participant["sortName"]
                 if participant_type == "Actor":
                     character = participant["characterDetails"]["character"]
-                    characterId = participant["characterDetails"]["characterId"]
+                    character_id = participant["characterDetails"]["characterId"]
                     participants.append(
-                        Actor(character=character, characterId=characterId, displayName=displayName, order=order, id=id,
-                              sortName=sortName))
+                        Actor(character=character, character_id=character_id, display_name=display_name, order=order, actor_id=participant_id,
+                              sort_name=sort_name))
                 else:
-                    participants.append(Participant(displayName=displayName, order=order, id=id, sortName=sortName))
+                    participants.append(Participant(display_name=display_name, order=order, participant_id=participant_id, sort_name=sort_name))
         except KeyError:
             pass
         return participants
@@ -42,26 +41,26 @@ def parseParticipants(participants_json):
     return actors, directors, producers, creators
 
 
-def parseProfile(profile_json):
-    id = profile_json["id"]
+def parse_profile(profile_json):
+    profile_id = profile_json["id"]
     name = profile_json["name"]
-    kidsMode = profile_json["attributes"]["kidsModeEnabled"]
-    isDefault = profile_json["attributes"]["isDefault"]
+    kids_mode = profile_json["attributes"]["kidsModeEnabled"]
+    is_default = profile_json["attributes"]["isDefault"]
 
-    prf = Profile(id=id, name=name, kidsMode=kidsMode, isDefault=isDefault)
+    prf = Profile(profile_id=profile_id, name=name, kids_mode=kids_mode, is_default=is_default)
     prf.avatar.id = profile_json["attributes"]["avatar"]["id"]
-    prf.avatar.userSelected = profile_json["attributes"]["avatar"]["userSelected"]
+    prf.avatar.user_selected = profile_json["attributes"]["avatar"]["userSelected"]
 
-    prf.languagePreferences.app = profile_json["attributes"]["languagePreferences"]["appLanguage"]
+    prf.language_preferences.app = profile_json["attributes"]["languagePreferences"]["appLanguage"]
 
-    prf.languagePreferences.playback = profile_json["attributes"]["languagePreferences"]["playbackLanguage"]
+    prf.language_preferences.playback = profile_json["attributes"]["languagePreferences"]["playbackLanguage"]
 
-    prf.languagePreferences.subtitle = profile_json["attributes"]["languagePreferences"]["subtitleLanguage"]
-    prf.languagePreferences.subsEnabled = profile_json["attributes"]["languagePreferences"]["subtitlesEnabled"]
+    prf.language_preferences.subtitle = profile_json["attributes"]["languagePreferences"]["subtitleLanguage"]
+    prf.language_preferences.subs_enabled = profile_json["attributes"]["languagePreferences"]["subtitlesEnabled"]
     return prf
 
 
-def parseHits(hits_json, search=False):
+def parse_hits(hits_json, search=False):
     # lazy importing to avoid circular import
     # im dumb and can't design the module structure better
     from models.Series import Series
@@ -72,42 +71,42 @@ def parseHits(hits_json, search=False):
 
         if search:
             hit_json = hit_json["hit"]
-        id = hit_json["contentId"]
-        isProgram = True
+        contentId = hit_json["contentId"]
+        is_program = True
         try:
             # film
             title = hit_json["text"]["title"]["full"]["program"]["default"]["content"]
         except KeyError:
             # series
-            isProgram = False
+            is_program = False
             title = hit_json["text"]["title"]["full"]["series"]["default"]["content"]
-        if isProgram:
-            hitType = HitType.Movie
-            hit = Movie(title=title, id=id, type=hitType)
+        if is_program:
+            hit_type = HitType.MOVIE
+            hit = Movie(title=title, movie_id=contentId, hit_type=hit_type)
 
-            hit.internalTitle = hit_json["internalTitle"]
+            hit.internal_title = hit_json["internalTitle"]
             hit.format = hit_json["mediaMetadata"]["format"]
-            hit.mediaId = hit_json["mediaMetadata"]["mediaId"]
-            hit.familyId = hit_json["family"]["familyId"]
-            hit.encodedFamilyId = hit_json["family"]["encodedFamilyId"]
+            hit.media_id = hit_json["mediaMetadata"]["mediaId"]
+            hit.family_id = hit_json["family"]["familyId"]
+            hit.encoded_family_id = hit_json["family"]["encodedFamilyId"]
             hit.length = hit_json["mediaMetadata"]["runtimeMillis"]
 
         else:
-            hitType = HitType.Series
-            hit = Series(title=title, id=id, type=hitType)
+            hit_type = HitType.SERIES
+            hit = Series(title=title, series_id=contentId, hit_type=hit_type)
 
-            hit.seriesId = hit_json["seriesId"]
-            hit.encodedSeriesId = hit_json["encodedSeriesId"]
-            hit.familyId = hit_json.get(
+            hit.series_id = hit_json["seriesId"]
+            hit.encoded_series_id = hit_json["encodedSeriesId"]
+            hit.family_id = hit_json.get(
                 "familyId")  # sometimes they key is missing, but it's not that important hence the program shouldn't crash
-            hit.encodedFamilyId = hit_json["family"]["encodedFamilyId"]
+            hit.encoded_family_id = hit_json["family"]["encodedFamilyId"]
 
-        hit.contentId = hit_json["contentId"]
+        hit.content_id = hit_json["contentId"]
         hit.images = hit_json["image"]
-        hit.releaseType = hit_json["releases"][0]["releaseType"]
-        hit.releaseDate = hit_json["releases"][0]["releaseDate"]
-        hit.releaseYear = hit_json["releases"][0]["releaseYear"]
-        hit.ImpliedMaturityValue = hit_json.get("ratings")[0].get(
+        hit.release_type = hit_json["releases"][0]["releaseType"]
+        hit.release_date = hit_json["releases"][0]["releaseDate"]
+        hit.release_year = hit_json["releases"][0]["releaseYear"]
+        hit.implied_maturity_value = hit_json.get("ratings")[0].get(
             "impliedMaturityValue")  # sometimes they key is missing, but it's not that important hence the program shouldn't crash
         hit.rating = hit_json["ratings"][0]["value"]
 
@@ -115,22 +114,22 @@ def parseHits(hits_json, search=False):
 
     return hits
 
-def parseAudioCaptions(string_json, mediaId):
-    audioTracks = []
-    for audioTrack in string_json["mediaMetadata"]["audioTracks"]:
-        features = audioTrack["features"]
-        language = audioTrack["language"]
-        name = audioTrack["renditionName"]
-        trackType = audioTrack["trackType"]
-        audioTrack = AudioTrack(features=features, name=name, mediaId=mediaId, language=language, trackType=trackType)
-        audioTracks.append(audioTrack)
+def parse_audio_and_subtitles(string_json, media_id):
+    audio_tracks = []
+    for audio_track in string_json["mediaMetadata"]["audioTracks"]:
+        features = audio_track["features"]
+        language = audio_track["language"]
+        name = audio_track["renditionName"]
+        track_type = audio_track["trackType"]
+        audio_track = AudioTrack(features=features, name=name, media_id=media_id, language=language, track_type=track_type)
+        audio_tracks.append(audio_track)
 
-    captions = []
-    for audioTrack in string_json["mediaMetadata"]["captions"]:
-        language = audioTrack["language"]
-        name = audioTrack["renditionName"]
-        trackType = audioTrack["trackType"]
-        caption = Caption(name=name, language=language, mediaId=mediaId, trackType=trackType)
-        captions.append(caption)
+    subtitles = []
+    for audio_track in string_json["mediaMetadata"]["captions"]:
+        language = audio_track["language"]
+        name = audio_track["renditionName"]
+        track_type = audio_track["trackType"]
+        subtitle = Subtitles(name=name, language=language, media_id=media_id, track_type=track_type)
+        subtitles.append(subtitle)
 
-    return audioTracks, captions
+    return audio_tracks, subtitles

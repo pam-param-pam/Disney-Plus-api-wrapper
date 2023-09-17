@@ -1,4 +1,3 @@
-import json
 import logging
 
 import requests
@@ -11,7 +10,7 @@ from models.Language import Language
 from models.Movie import Movie
 from models.Rating import Rating
 from models.Series import Series
-from utils.parser import parseHits, parseProfile
+from utils.parser import parse_hits, parse_profile
 
 logging.basicConfig()
 
@@ -19,45 +18,45 @@ logger = logging.getLogger('DisneyAPI')
 logger.setLevel(logging.DEBUG)
 
 
-class DisneyAPI(object):
-    def __init__(self, email, password, proxies=False, forceLogin=False):
+class DisneyAPI:
+    def __init__(self, email, password, proxies=False, force_login=False):
 
-        Login(email=email, password=password, proxies=proxies, forceLogin=forceLogin).getAuthToken()
+        Login(email=email, password=password, proxies=proxies, force_login=force_login).get_auth_token()
 
-        self.deviceId = None
-        self.devicePlatform = None
-        self.sessionsId = None
+        self.device_id = None
+        self.device_platform = None
+        self.sessions_id = None
 
         self.account: Account = None
-        self.AccountInit()
-        self.SessionInit()
+        self.account_init()
+        self.session_init()
         APIConfig.region = "en" if self.account is None else self.account.country
         APIConfig.language = APIConfig.region
 
-    def search(self, query, rating: Rating = Rating.Adult):
+    def search(self, query, rating: Rating = Rating.ADULT):
 
         res = requests.get(
             f"https://disney.content.edge.bamgrid.com/svc/search/disney/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/{rating.value}/language/{APIConfig.language}/queryType/ge/pageSize/0/query/{query}",
-            headers={"authorization": "Bearer " + APIConfig.token})
+            headers={"authorization": "Bearer " + APIConfig.token}, timeout=10)
         if res.status_code != 200:
             raise ApiException(res)
-        return parseHits(res.json()["data"]["search"]["hits"], True)
+        return parse_hits(res.json()["data"]["search"]["hits"], True)
 
-    def searchMovies(self, query, rating: Rating = Rating.Adult):
+    def search_movies(self, query, rating: Rating = Rating.ADULT):
 
+        return [item for item in self.search(query, rating) if isinstance(item, Movie)]
 
-        return [item for item in self.search( query, rating) if isinstance(item, Movie)]
-
-    def searchSeries(self, query, rating: Rating = Rating.Adult):
+    def search_series(self, query, rating: Rating = Rating.ADULT):
 
         return [item for item in self.search(query, rating) if isinstance(item, Series)]
 
-    def setLanguage(self, language: Language):
+    def set_language(self, language: Language):
         APIConfig.language = language.value
 
-    def changeDownloadPath(self, path):
+    def set_download_path(self, path):
         APIConfig.default_path = path
-    def getProfiles(self):
+
+    def get_profiles(self):
         graphql_query = {
             "query": """
                 query {
@@ -97,10 +96,10 @@ class DisneyAPI(object):
             raise ApiException(res)
         profiles = []
         for profile in res.json()["data"]["me"]["account"]["profiles"]:
-            profiles.append(parseProfile(profile))
+            profiles.append(parse_profile(profile))
         return profiles
 
-    def getActiveProfile(self):
+    def get_active_profile(self):
         graphql_query = {
             "query": """
                 query {
@@ -136,14 +135,13 @@ class DisneyAPI(object):
             "variables": {}
         }
         res = APIConfig.session.post("https://disney.api.edge.bamgrid.com/v1/public/graphql", json=graphql_query,
-                                     headers={"authorization": "Bearer " + APIConfig.token})
-        print(res.text)
+                                     headers={"authorization": "Bearer " + APIConfig.token}, timeout=10)
         if res.status_code != 200:
             raise ApiException(res)
         profile = res.json()["data"]["me"]["account"]["activeProfile"]
-        return parseProfile(profile)
+        return parse_profile(profile)
 
-    def setActiveProfile(self, profileId):
+    def set_active_profile(self, profile_id):
         graphql_mutation = {
             "query": """
                 mutation switchProfile($input: SwitchProfileInput!) {
@@ -159,18 +157,18 @@ class DisneyAPI(object):
             """,
             "variables": {
                 "input": {
-                    "profileId": profileId
+                    "profileId": profile_id
                 }
             },
             "operationName": "switchProfile"
         }
         res = requests.post("https://disney.api.edge.bamgrid.com/v1/public/graphql", json=graphql_mutation,
-                            headers={"authorization": "Bearer " + APIConfig.token})
+                            headers={"authorization": "Bearer " + APIConfig.token}, timeout=10)
         if res.status_code != 200:
             raise ApiException(res)
         APIConfig.token = res.json()["extensions"]["sdk"]["token"]["accessToken"]
 
-    def SessionInit(self):
+    def session_init(self):
         graphql_query = {
             "query": """
                         query {
@@ -191,18 +189,18 @@ class DisneyAPI(object):
             "variables": {}
         }
         res = requests.post("https://disney.api.edge.bamgrid.com/v1/public/graphql", json=graphql_query,
-                            headers={"authorization": "Bearer " + APIConfig.token})
+                            headers={"authorization": "Bearer " + APIConfig.token}, timeout=10)
         if res.status_code != 200:
             raise ApiException(res)
         sess_json = res.json()["data"]["me"]["activeSession"]
         APIConfig.sessionId = sess_json["sessionId"]
-        self.deviceId = sess_json["device"]["id"]
-        self.devicePlatform = sess_json["device"]["platform"]
+        self.device_id = sess_json["device"]["id"]
+        self.device_platform = sess_json["device"]["platform"]
 
-    def getToken(self):
+    def get_token(self):
         return APIConfig.token
 
-    def AccountInit(self):
+    def account_init(self):
         graphql_query = {
             "query": """
                 query {
@@ -231,19 +229,20 @@ class DisneyAPI(object):
             "variables": {}
         }
         res = requests.post("https://disney.api.edge.bamgrid.com/v1/public/graphql", json=graphql_query,
-                            headers={"authorization": "Bearer " + APIConfig.token})
+                            headers={"authorization": "Bearer " + APIConfig.token}, timeout=10)
         if res.status_code != 200:
             raise ApiException(res)
         acc_json = res.json()["data"]["me"]["account"]
-        id = acc_json["id"]
+        account_id = acc_json["id"]
         email = acc_json["attributes"]["email"]
-        emailVerified = acc_json["attributes"]["emailVerified"]
-        createdAt = acc_json["attributes"]["dssIdentityCreatedAt"]
+        email_verified = acc_json["attributes"]["emailVerified"]
+        created_at = acc_json["attributes"]["dssIdentityCreatedAt"]
         try:
             country = acc_json["attributes"]["consentPreferences"]["dataElements"][0]["value"]
         except IndexError:
+            # country seems to be missing for newly create accounts
             country = "en"
             logger.warning("Couldn't set country, fallbacking to default: EN-gb")
 
-        account = Account(id=id, email=email, createdAt=createdAt, country=country, isEmailVerified=emailVerified)
+        account = Account(account_id=account_id, email=email, created_at=created_at, country=country, is_email_verified=email_verified)
         self.account = account

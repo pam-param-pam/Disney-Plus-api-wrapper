@@ -1,7 +1,7 @@
 class Account:
-    def __init__(self, id, email, isEmailVerified, country, createdAt):
-        self.id = id
+    def __init__(self, account_id, email, is_email_verified, country, created_at):
+        self.id = account_id
         self.email = email
-        self.isEmailVerified = isEmailVerified
+        self.is_email_verified = is_email_verified
         self.country = country
-        self.createdAt = createdAt
+        self.created_at = created_at
