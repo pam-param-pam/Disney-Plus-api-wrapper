@@ -1,9 +1,17 @@
-class AudioTrack:
+import os
 
-    def __init__(self, language, name, trackType, features):
+from Config import APIConfig
+from models.Downloadable import Downloadable
+from utils.helper import rename_filename
+
+
+class AudioTrack(Downloadable):
+
+    def __init__(self, language, name, media_id, track_type, features):
+        super().__init__(media_id)
         self.language = language
         self.name = name
-        self.trackType = trackType
+        self.track_type = track_type
         self.features = features
 
     def __str__(self):
@@ -11,3 +19,24 @@ class AudioTrack:
 
     def __repr__(self):
         return self.name
+
+    def download_audio(self, m3u8_url, output):
+        os.system(
+            f'ffmpeg -i "{m3u8_url}" -c copy "{output}" -preset ultrafast -loglevel warning -hide_banner -stats')
+        #-protocol_whitelist file,http,https,tcp,tls,crypto
+    def _get_audio(self, audio, name):
+        path = os.path.join(APIConfig.default_path, name + audio["extension"])
+        self.download_audio(audio["url"], path)
+        return path
+
+    def download(self, name=None, quality="max"):
+        if not name:
+            name = self.media_id
+        name = rename_filename(name)
+        os.makedirs(APIConfig.default_path, exist_ok=True)
+
+        m3u8_url = self.get_m3u8_url(self.media_id)
+
+        _, audio = self.parse_m3u(m3u8_url, self.language, quality)
+
+        return self._get_audio(audio, name)

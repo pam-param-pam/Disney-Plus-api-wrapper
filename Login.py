@@ -13,10 +13,10 @@ logger = logging.getLogger('Login')
 logger.setLevel(logging.DEBUG)
 
 
-class Login(object):
-    def __init__(self, email, password, proxies, forceLogin):
+class Login:
+    def __init__(self, email, password, proxies, force_login):
         self._email = email
-        self._forceLogin = forceLogin
+        self._force_login = force_login
         self._password = password
         self._web_page = 'https://www.disneyplus.com/login'
         self._devices_url = "https://disney.api.edge.bamgrid.com/devices"
@@ -28,7 +28,7 @@ class Login(object):
         if proxies:
             self._session.proxies.update(proxies)
 
-    def _clientApiKey(self):
+    def _client_api_key(self):
         res = self._session.get(self._web_page)
         match = re.search("window.server_path = ({.*});", res.text)
         janson = json.loads(match.group(1))
@@ -53,9 +53,9 @@ class Login(object):
 
     def _access_token(self, client_apikey, assertion):
 
-        header = {"authorization": "Bearer {}".format(client_apikey), "Origin": "https://www.disneyplus.com"}
+        header = {"authorization": f"Bearer {client_apikey}", "Origin": "https://www.disneyplus.com"}
 
-        postdata = {
+        post_date = {
             "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
             "latitude": "0",
             "longitude": "0",
@@ -64,7 +64,7 @@ class Login(object):
             "subject_token_type": "urn:bamtech:params:oauth:token-type:device"
         }
 
-        res = self._session.post(url=self._token_url, headers=header, data=postdata)
+        res = self._session.post(url=self._token_url, headers=header, data=post_date)
 
         if res.status_code != 200:
             raise LoginException(res)
@@ -113,7 +113,7 @@ class Login(object):
 
         return assertion
 
-    def _finalToken(self, subject_token, client_apikey):
+    def _final_token(self, subject_token, client_apikey):
 
         header = {"authorization": f"Bearer {client_apikey}", "Origin": "https://www.disneyplus.com"}
 
@@ -136,7 +136,7 @@ class Login(object):
 
         return access_token, expires_in, refresh_token
 
-    def _updateFile(self):
+    def _update_file(self):
         with open("token.json", "w") as file:
             current_time = datetime.now()
             expiration_time = current_time + timedelta(hours=4)
@@ -147,29 +147,29 @@ class Login(object):
             }
             json.dump(token_data, file)
 
-    def _getAuthTokenTruApi(self):
+    def _get_auth_token_tru_api(self):
         logger.info("Loging using disney's api")
         logger.warning("Loging using Disney's api repeatedly will cause account blocks")
-        clientapikey_ = self._clientApiKey()
+        clientapikey_ = self._client_api_key()
         assertion_ = self._assertion(clientapikey_)
 
         access_token_ = self._access_token(clientapikey_, assertion_)
         id_token_ = self._login(access_token_)
 
         user_assertion = self._grant(id_token_, access_token_)
-        TOKEN, EXPIRE, REFRESH = self._finalToken(user_assertion, clientapikey_)
+        token, expire, refresh = self._final_token(user_assertion, clientapikey_)
 
-        APIConfig.token = TOKEN
-        APIConfig.refresh = REFRESH
-        self._updateFile()
+        APIConfig.token = token
+        APIConfig.refresh = refresh
+        self._update_file()
 
-    def getAuthToken(self):
+    def get_auth_token(self):
         APIConfig.session = self._session
-        if self._forceLogin:
-            self._getAuthTokenTruApi()
+        if self._force_login:
+            self._get_auth_token_tru_api()
             return
         try:
-            with open("token.json", "r") as file:
+            with open("token.json", "r", encoding="utf8") as file:
 
                 data = json.load(file)
                 token = data["token"]
@@ -198,18 +198,18 @@ class Login(object):
                         "operationName": "refreshToken"
                     }
                     res = self._session.post(url="https://disney.api.edge.bamgrid.com/graph/v1/device/graphql",
-                                             json=graph_mutation, headers={"authorization": self._clientApiKey()})
+                                             json=graph_mutation, headers={"authorization": self._client_api_key()})
                     if res.status_code != 200:
                         raise LoginException(res)
 
                     res_json = res.json()
                     APIConfig.token = res_json["extensions"]["sdk"]["token"]["accessToken"]
                     APIConfig.refresh = res_json["extensions"]["sdk"]["token"]["refreshToken"]
-                    self._updateFile()
+                    self._update_file()
 
-        except (FileNotFoundError, KeyError, JSONDecodeError) as e:
+        except (FileNotFoundError, KeyError, JSONDecodeError):
 
             logger.info("Creating token.json file")
-            open("token.json", "a+").close()
+            open("token.json", "a+", encoding="utf8").close()
 
-            self._getAuthTokenTruApi()
+            self._get_auth_token_tru_api()

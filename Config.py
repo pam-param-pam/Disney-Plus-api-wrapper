@@ -3,7 +3,7 @@ import threading
 import requests
 
 
-class APIConfig(object):
+class APIConfig:
     region = None
     language = None
     session: requests.Session = None
@@ -11,6 +11,8 @@ class APIConfig(object):
     refresh = None
     token_expire = None
     sessionId = None
+    default_path = "downloads"
+
     _instance = None
     _lock = threading.Lock()
 
