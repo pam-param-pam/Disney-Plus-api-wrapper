@@ -3,6 +3,8 @@
 
 A future rich api wrapper for Disney+ made with python.
 
+Video downloads is not and and most probably will not supported due to Widevine being Widevine. 
+
 
 ## Requirements
 ```
