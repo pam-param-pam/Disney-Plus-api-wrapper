@@ -12,7 +12,7 @@ class APIConfig:
     token_expire = None
     sessionId = None
     default_path = "downloads"
-
+    auth = None
     _instance = None
     _lock = threading.Lock()
 

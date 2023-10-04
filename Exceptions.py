@@ -1,7 +1,7 @@
 import requests
 
 
-class LoginException(Exception):
+class AuthException(Exception):
     def __init__(self, message: requests.Response):
         self.message = message
         super().__init__(f"{self.message.text}\n{self.message.status_code}")

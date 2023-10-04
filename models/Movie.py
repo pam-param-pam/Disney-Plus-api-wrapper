@@ -1,3 +1,4 @@
+from Auth import Auth
 from Config import APIConfig
 from Exceptions import ApiException
 from models.Hit import Hit
@@ -29,11 +30,8 @@ class Movie(Hit):
         return self._audio_tracks
 
     def _get_more_data(self):
-        res = APIConfig.session.get(
-            f"https://disney.content.edge.bamgrid.com/svc/content/DmcVideoBundle/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/encodedFamilyId/{self.encoded_family_id}",
-            headers={"authorization": "Bearer " + APIConfig.token})
-        if res.status_code != 200:
-            raise ApiException(res)
+        res = Auth.make_get_request(f"https://disney.content.edge.bamgrid.com/svc/content/DmcVideoBundle/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/encodedFamilyId/{self.encoded_family_id}")
+
         res_json = res.json()["data"]["DmcVideoBundle"]
         self._brief_description = res_json["video"]["text"]["description"]["brief"]["program"]["default"]["content"]
         self._medium_description = res_json["video"]["text"]["description"]["medium"]["program"]["default"]["content"]
@@ -51,11 +49,6 @@ class Movie(Hit):
         self._audio_tracks = audio_tracks
 
     def get_related(self):
-
-        res = APIConfig.session.get(
-            f"https://disney.content.edge.bamgrid.com/svc/content/RelatedItems/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/encodedFamilyId/{self.encoded_family_id}",
-            headers={"authorization": "Bearer " + APIConfig.token}, timeout=10)
-        if res.status_code != 200:
-            raise ApiException(res)
+        res = Auth.make_get_request(f"https://disney.content.edge.bamgrid.com/svc/content/RelatedItems/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/encodedFamilyId/{self.encoded_family_id}")
 
         return parse_hits(res.json()["data"]["RelatedItems"]["items"])

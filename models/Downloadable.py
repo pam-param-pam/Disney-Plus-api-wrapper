@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 
 import m3u8
 
+from Auth import Auth
 from Config import APIConfig
 from Exceptions import ApiException
 
@@ -18,16 +19,7 @@ class Downloadable(ABC):
         pass
 
     def get_m3u8_url(self, media_id):
-        headers = {
-            'accept': 'application/vnd.media-service+json; version=6',
-            'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
-            'x-bamsdk-platform': "macOS",
-            'x-bamsdk-version': '23.1',
-            'x-dss-edge-accept': 'vnd.dss.edge+json; version=2',
-            'x-dss-feature-filtering': 'true',
-            'Origin': 'https://www.disneyplus.com',
-            'authorization': APIConfig.token
-        }
+
         playback_url = f"https://disney.playback.edge.bamgrid.com/media/{media_id}/scenarios/tvs-drm-cbcs"
 
         json_data = {
@@ -48,10 +40,7 @@ class Downloadable(ABC):
                 }
             },
         }
-        res = APIConfig.session.post(
-            url=playback_url, headers=headers, json=json_data)
-        if res.status_code != 200:
-            raise ApiException(res)
+        res = Auth.make_post_request(playback_url, json=json_data)
 
         return res.json()['stream']['sources'][0]['complete']["url"]
 
