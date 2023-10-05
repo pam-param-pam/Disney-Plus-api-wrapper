@@ -68,7 +68,6 @@ def parse_hits(hits_json, search=False):
 
     hits = []
     for hit_json in hits_json:
-
         if search:
             hit_json = hit_json["hit"]
         contentId = hit_json["contentId"]

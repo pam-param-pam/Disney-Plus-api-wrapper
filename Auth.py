@@ -7,7 +7,7 @@ from json import JSONDecodeError
 import requests
 
 from Config import APIConfig
-from Exceptions import AuthException, ApiException
+from Exceptions import AuthException, ApiException, GraphqlException
 from utils.helper import update_file
 
 logger = logging.getLogger('Login')
@@ -205,7 +205,6 @@ class Auth:
                 res = APIConfig.session.get(url=url, json=json, headers=headers, timeout=10)
             else:
                 res = APIConfig.session.get(url=url, headers=headers, timeout=10)
-
         if res.status_code == 401:
             raise AuthException(res) from None
         if res.status_code != 200:
@@ -230,6 +229,12 @@ class Auth:
         except AuthException:
             Auth.refreshToken()
             response = Auth.make_request(url, True, json)
+        if not response.json()["data"]:
+            errors = []
+            for error in response.json()["errors"]:
+                errors.append(error)
+            raise GraphqlException(errors)
+
         return response
 
     def get_auth_token(self):

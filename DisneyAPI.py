@@ -1,4 +1,5 @@
 import logging
+from typing import Union
 
 import requests
 
@@ -8,6 +9,7 @@ from Exceptions import ApiException
 from models.Account import Account
 from models.Language import Language
 from models.Movie import Movie
+from models.ProgramType import MovieType, SeriesType
 from models.Rating import Rating
 from models.Series import Series
 from utils.parser import parse_hits, parse_profile
@@ -135,7 +137,12 @@ class DisneyAPI:
         profile = res.json()["data"]["me"]["account"]["activeProfile"]
         return parse_profile(profile)
 
-    def set_active_profile(self, profile_id):
+    def search_program_type(self, program_type: Union[MovieType, SeriesType], rating: Rating = Rating.ADULT):
+
+        res = Auth.make_get_request(f"https://disney.content.edge.bamgrid.com/svc/content/GenericSet/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/{rating.value}/language/en-gb/setId/{program_type.value}/pageSize/3/page/1")
+        return parse_hits(res.json()["data"]["GenericSet"]["items"])
+
+    def set_active_profile(self, profile_id: str, pin: str = None):
         graphql_mutation = {
             "query": """
                 mutation switchProfile($input: SwitchProfileInput!) {
@@ -151,12 +158,15 @@ class DisneyAPI:
             """,
             "variables": {
                 "input": {
-                    "profileId": profile_id
+                    "profileId": profile_id,
+                    "entryPin": pin
+
                 }
             },
             "operationName": "switchProfile"
         }
         res = Auth.make_post_request("https://disney.api.edge.bamgrid.com/v1/public/graphql", json=graphql_mutation)
+
         APIConfig.token = res.json()["extensions"]["sdk"]["token"]["accessToken"]
 
     def _account_init(self):
