@@ -34,7 +34,7 @@ from models.Rating import Rating
 api = DisneyAPI(email="email", password="password", proxies={}, force_login=True)
 
 profileId = api.get_profiles()[0].id  # grabs the first profile's id
-print(api.set_active_profile(profileId))
+print(api.set_active_profile(profileId)) # if profile is locked, pass pin as an argument
 print(api.get_active_profile())
 
 api.set_language(Language.POLISH)  # sets language to Polish, from now all data will be returned in that language
@@ -52,6 +52,17 @@ if searches[0].type == HitType.MOVIE:
     print(searches[0].cast)
     print(searches[0].audio_tracks)
     print(searches[0].subtitles)
+
+```
+
+### More examples
+```python
+from models.ProgramType import MovieType, SeriesType
+
+# Search by program type
+print(api.search_program_type(MovieType.ALL))
+# or
+api.search_program_type(SeriesType.KIDS)
 
 ```
 
