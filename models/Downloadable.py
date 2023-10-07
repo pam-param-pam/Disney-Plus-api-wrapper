@@ -5,8 +5,6 @@ from urllib.parse import urljoin
 import m3u8
 
 from Auth import Auth
-from Config import APIConfig
-from Exceptions import ApiException
 
 
 class Downloadable(ABC):

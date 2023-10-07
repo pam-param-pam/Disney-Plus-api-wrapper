@@ -10,7 +10,6 @@ from models.Downloadable import Downloadable
 from utils.helper import rename_filename
 
 
-
 class Subtitles(Downloadable):
 
     def __init__(self, language, name, media_id, track_type):

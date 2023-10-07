@@ -24,7 +24,6 @@ class Hit(ABC):
         self._directors = None
         self._producers = None
         self._creators = None
-        self.family_id = None
         self.encoded_family_id = None
         self.content_id = None
 

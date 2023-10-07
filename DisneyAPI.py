@@ -1,11 +1,9 @@
 import logging
-from typing import Union
+from typing import Union, Dict
 
-import requests
 
 from Auth import Auth
 from Config import APIConfig
-from Exceptions import ApiException
 from models.Account import Account
 from models.Language import Language
 from models.Movie import Movie
@@ -16,12 +14,12 @@ from utils.parser import parse_hits, parse_profile
 
 logging.basicConfig()
 
-logger = logging.getLogger('DisneyAPI')
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
 class DisneyAPI:
-    def __init__(self, email, password, proxies=False, force_login=False):
+    def __init__(self, email: str, password: str, proxies: Dict = False, force_login: bool = False):
 
         auth = Auth(email=email, password=password, proxies=proxies, force_login=force_login)
         auth.get_auth_token()
@@ -37,23 +35,23 @@ class DisneyAPI:
         APIConfig.region = "en" if self.account is None else self.account.country
         APIConfig.language = APIConfig.region
 
-    def search(self, query, rating: Rating = Rating.ADULT):
-        res = Auth.make_get_request(f"https://disney.content.edge.bamgrid.com/svc/search/disney/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/{rating.value}/language/{APIConfig.language}/queryType/ge/pageSize/0/query/{query}")
-
+    def search(self, query: str, rating: Rating = Rating.ADULT):
+        res = Auth.make_get_request(
+            f"https://disney.content.edge.bamgrid.com/svc/search/disney/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/{rating.value}/language/{APIConfig.language}/queryType/ge/pageSize/45/query/{query}")
         return parse_hits(res.json()["data"]["search"]["hits"], True)
 
-    def search_movies(self, query, rating: Rating = Rating.ADULT):
+    def search_movies(self, query: str, rating: Rating = Rating.ADULT):
 
         return [item for item in self.search(query, rating) if isinstance(item, Movie)]
 
-    def search_series(self, query, rating: Rating = Rating.ADULT):
+    def search_series(self, query: str, rating: Rating = Rating.ADULT):
 
         return [item for item in self.search(query, rating) if isinstance(item, Series)]
 
     def set_language(self, language: Language):
         APIConfig.language = language.value
 
-    def set_download_path(self, path):
+    def set_download_path(self, path: str):
         APIConfig.default_path = path
 
     def get_profiles(self):
@@ -138,8 +136,7 @@ class DisneyAPI:
         return parse_profile(profile)
 
     def search_program_type(self, program_type: Union[MovieType, SeriesType], rating: Rating = Rating.ADULT):
-
-        res = Auth.make_get_request(f"https://disney.content.edge.bamgrid.com/svc/content/GenericSet/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/{rating.value}/language/en-gb/setId/{program_type.value}/pageSize/3/page/1")
+        res = Auth.make_get_request(f"https://disney.content.edge.bamgrid.com/svc/content/GenericSet/version/6.0/region/{APIConfig.region}/audience/k-false,l-true/maturity/{rating.value}/language/{APIConfig.language}/setId/{program_type.value}/pageSize/100000/page/1")
         return parse_hits(res.json()["data"]["GenericSet"]["items"])
 
     def set_active_profile(self, profile_id: str, pin: str = None):
@@ -214,7 +211,7 @@ class DisneyAPI:
 
         account = Account(account_id=account_id, email=email, created_at=created_at, country=country,
                           is_email_verified=email_verified)
-        self.account =account
+        self.account = account
 
     def _session_init(self):
         graphql_query = {
@@ -245,5 +242,3 @@ class DisneyAPI:
 
     def get_token(self):
         return APIConfig.token
-
-

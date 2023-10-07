@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from json import JSONDecodeError
 
 import requests
@@ -10,7 +10,7 @@ from Config import APIConfig
 from Exceptions import AuthException, ApiException, GraphqlException
 from utils.helper import update_file
 
-logger = logging.getLogger('Login')
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 

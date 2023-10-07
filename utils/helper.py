@@ -1,12 +1,10 @@
 import json
-import logging
 import re
 from datetime import timedelta, datetime
 
 from Config import APIConfig
 
-logger = logging.getLogger('Helper')
-logger.setLevel(logging.DEBUG)
+
 def rename_filename(filename):
     """Fix invalid character from title"""
 
@@ -31,8 +29,6 @@ def rename_filename(filename):
     return filename
 
 
-
-
 def update_file():
     with open("token.json", "w") as file:
         current_time = datetime.now()
@@ -43,4 +39,3 @@ def update_file():
             "expiration_time": expiration_time.strftime("%Y-%m-%d %H:%M:%S")
         }
         json.dump(token_data, file)
-

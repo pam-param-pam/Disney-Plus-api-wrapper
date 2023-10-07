@@ -1,6 +1,5 @@
 from Auth import Auth
 from Config import APIConfig
-from Exceptions import ApiException
 from models.Hit import Hit
 from models.HitType import HitType
 from utils.parser import parse_participants, parse_hits, parse_audio_and_subtitles
