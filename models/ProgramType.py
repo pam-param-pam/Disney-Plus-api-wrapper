@@ -18,6 +18,7 @@ class MovieType(Enum):
     WESTERNS = "6335bf56-2be9-4e47-856a-3bae98516afa"
     KIDS = "3314db38-283d-4f14-b4f1-6d749e264dd0"
     ULTRA_HD_AND_HDR = "48a06bc3-9c40-4bc0-8fc1-08d21975275e"
+
 class SeriesType(Enum):
     FEATURED = "a9c7b5ec-180a-4f6d-8fe9-e4c3b20b0777"
     ALL = "53adf843-491b-40ae-9b46-bccbceed863b"

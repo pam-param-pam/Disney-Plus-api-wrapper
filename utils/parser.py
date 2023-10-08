@@ -100,18 +100,11 @@ def parse_hits(hits_json, search=False):
                 hit.series_id = hit_json["seriesId"]
                 hit.encoded_series_id = hit_json["encodedSeriesId"]
 
-
             hit.content_id = hit_json["contentId"]
             hit.images = hit_json["image"]
             hit.release_type = hit_json["releases"][0]["releaseType"]
             hit.release_date = hit_json["releases"][0]["releaseDate"]
             hit.release_year = hit_json["releases"][0]["releaseYear"]
-
-            # sometimes they key is missing, but it's not that important hence the program shouldn't crash
-            try:
-                hit.implied_maturity_value = hit_json["ratings"][0]["impliedMaturityValue"]
-            except KeyError:
-                logger.info("impliedMaturityValue is missing")
 
             hit.rating = hit_json["ratings"][0]["value"]
 

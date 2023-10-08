@@ -4,8 +4,6 @@ import re
 from datetime import datetime
 from json import JSONDecodeError
 
-import requests
-
 from Config import APIConfig
 from Exceptions import AuthException, ApiException, GraphqlException
 from utils.helper import update_file
@@ -24,14 +22,13 @@ class Auth:
         self._login_url = 'https://disney.api.edge.bamgrid.com/idp/login'
         self._token_url = "https://disney.api.edge.bamgrid.com/token"
         self._grant_url = 'https://disney.api.edge.bamgrid.com/accounts/grant'
-        self._session = requests.Session()
 
         if proxies:
-            self._session.proxies.update(proxies)
+            APIConfig.session.proxies.update(proxies)
         APIConfig.auth = self
 
     def _client_api_key(self):
-        res = self._session.get(self._web_page)
+        res = APIConfig.session.get(self._web_page)
         match = re.search("window.server_path = ({.*});", res.text)
         janson = json.loads(match.group(1))
         clientapikey = janson["sdk"]["clientApiKey"]
@@ -47,7 +44,10 @@ class Auth:
         }
 
         header = {"authorization": f"Bearer {client_apikey}", "Origin": "https://www.disneyplus.com"}
-        res = self._session.post(url=self._devices_url, headers=header, json=postdata)
+        res = APIConfig.session.post(url=self._devices_url, headers=header, json=postdata)
+
+        if res.status_code != 200:
+            raise AuthException(res)
 
         assertion = res.json()["assertion"]
 
@@ -66,7 +66,7 @@ class Auth:
             "subject_token_type": "urn:bamtech:params:oauth:token-type:device"
         }
 
-        res = self._session.post(url=self._token_url, headers=header, data=post_date)
+        res = APIConfig.session.post(url=self._token_url, headers=header, data=post_date)
 
         if res.status_code != 200:
             raise AuthException(res)
@@ -88,9 +88,11 @@ class Auth:
         }
 
         data = {'email': self._email, 'password': self._password}
-        res = self._session.post(url=self._login_url, data=json.dumps(data), headers=headers)
+        res = APIConfig.session.post(url=self._login_url, data=json.dumps(data), headers=headers)
+
         if res.status_code != 200:
             raise AuthException(res)
+
         id_token = res.json()["id_token"]
         return id_token
 
@@ -110,7 +112,11 @@ class Auth:
 
         data = {'id_token': id_token}
 
-        res = self._session.post(url=self._grant_url, data=json.dumps(data), headers=headers)
+        res = APIConfig.session.post(url=self._grant_url, data=json.dumps(data), headers=headers)
+
+        if res.status_code != 200:
+            raise AuthException(res)
+
         assertion = res.json()["assertion"]
 
         return assertion
@@ -128,7 +134,7 @@ class Auth:
             "subject_token_type": "urn:bamtech:params:oauth:token-type:account"
         }
 
-        res = self._session.post(url=self._token_url, headers=header, data=postdata)
+        res = APIConfig.session.post(url=self._token_url, headers=header, data=postdata)
 
         if res.status_code != 200:
             raise AuthException(res)
@@ -177,6 +183,15 @@ class Auth:
             if res.status_code != 200:
                 raise AuthException(res)
 
+            if not res.json()["data"]:
+                errors = []
+                for error in res.json()["errors"]:
+                    errors.append(error)
+                logger.info("Couldn't refresh access token with refresh token:\n%s", errors)
+                #  trying one last time to get access token via standard login procedure using email and password
+                APIConfig.auth._get_auth_token_tru_api()
+                return
+
             res_json = res.json()
 
             APIConfig.token = res_json["extensions"]["sdk"]["token"]["accessToken"]
@@ -206,9 +221,9 @@ class Auth:
             else:
                 res = APIConfig.session.get(url=url, headers=headers, timeout=10)
         if res.status_code == 401:
-            raise AuthException(res) from None
+            raise AuthException(res)
         if res.status_code != 200:
-            raise ApiException(res) from None
+            raise ApiException(res)
 
         return res
 
@@ -238,7 +253,6 @@ class Auth:
         return response
 
     def get_auth_token(self):
-        APIConfig.session = self._session
         if self._force_login:
             self._get_auth_token_tru_api()
             return

@@ -13,7 +13,6 @@ class Hit(ABC):
         self.release_type = None
         self.release_date = None
         self.release_year = None
-        self.implied_maturity_value = None
         self.images = None
         self.rating = None
 

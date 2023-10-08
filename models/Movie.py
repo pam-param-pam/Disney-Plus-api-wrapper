@@ -30,7 +30,6 @@ class Movie(Hit):
 
     def _get_more_data(self):
         res = Auth.make_get_request(f"https://disney.content.edge.bamgrid.com/svc/content/DmcVideoBundle/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/encodedFamilyId/{self.encoded_family_id}")
-
         res_json = res.json()["data"]["DmcVideoBundle"]
         self._brief_description = res_json["video"]["text"]["description"]["brief"]["program"]["default"]["content"]
         self._medium_description = res_json["video"]["text"]["description"]["medium"]["program"]["default"]["content"]
@@ -49,5 +48,4 @@ class Movie(Hit):
 
     def get_related(self):
         res = Auth.make_get_request(f"https://disney.content.edge.bamgrid.com/svc/content/RelatedItems/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/encodedFamilyId/{self.encoded_family_id}")
-
         return parse_hits(res.json()["data"]["RelatedItems"]["items"])

@@ -6,7 +6,7 @@ import requests
 class APIConfig:
     region = None
     language = None
-    session: requests.Session = None
+    session = requests.Session()
     token = None
     refresh = None
     token_expire = None
