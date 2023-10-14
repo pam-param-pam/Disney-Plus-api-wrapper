@@ -10,7 +10,7 @@ from models.Downloadable import Downloadable
 from utils.helper import rename_filename
 
 
-class Subtitles(Downloadable):
+class Subtitle(Downloadable):
 
     def __init__(self, language, name, media_id, track_type):
         super().__init__(media_id)
@@ -19,10 +19,10 @@ class Subtitles(Downloadable):
         self.track_type = track_type
 
     def __str__(self):
-        return f"[{self.name}, {self.language}]"
+        return f"Subtitle=[{self.name}, {self.language}]"
 
     def __repr__(self):
-        return self.language
+        return self.name
 
     def is_subtitle(self, file_path, file_format=''):
         extension = Path(file_path).suffix.lower()
@@ -86,13 +86,13 @@ class Subtitles(Downloadable):
         for i in reversed(delete_list):
             del subs[i]
         return subs
-    def get_subtitles(self, subtitle, name):
+    def _get_subtitles(self, subtitle, name):
         folder_path = os.path.join(APIConfig.default_path, "tmp")
         os.makedirs(folder_path, exist_ok=True)
 
-        self.download_subtitle(subtitle['urls'], folder_path, name)
+        self._download_subtitle(subtitle['urls'], folder_path, name)
 
-    def download_subtitle(self, urls, folder_path, name):
+    def _download_subtitle(self, urls, folder_path, name):
         cnt = 0
         headers = {
             'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"}
@@ -103,9 +103,9 @@ class Subtitles(Downloadable):
                     file.write(data)
             cnt += 1
 
-        self.merge_subtitles(folder_path, name)
+        self._merge_subtitles(folder_path, name)
 
-    def merge_subtitles(self, folder_path, name):
+    def _merge_subtitles(self, folder_path, name):
         subtitles = []
         for segment in sorted(os.listdir(folder_path)):
             file_path = os.path.join(folder_path, segment)
@@ -128,8 +128,8 @@ class Subtitles(Downloadable):
         if not name:
             name = self.media_id
         name = rename_filename(name)
-        m3u8_url = self.get_m3u8_url(self.media_id)
+        m3u8_url = self._get_m3u8_url(self.media_id)
 
-        subtitle, _ = self.parse_m3u(m3u8_url, self.language, "min")
+        subtitle, _ = self._parse_m3u(m3u8_url, self.name, "min")
 
-        self.get_subtitles(subtitle, name)
+        self._get_subtitles(subtitle, name)

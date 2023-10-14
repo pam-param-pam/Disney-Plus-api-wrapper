@@ -16,7 +16,7 @@ class Downloadable(ABC):
     def download(self):
         pass
 
-    def get_m3u8_url(self, media_id):
+    def _get_m3u8_url(self, media_id):
 
         playback_url = f"https://disney.playback.edge.bamgrid.com/media/{media_id}/scenarios/tvs-drm-cbcs"
 
@@ -42,7 +42,7 @@ class Downloadable(ABC):
 
         return res.json()['stream']['sources'][0]['complete']["url"]
 
-    def parse_m3u(self, m3u_link, language, quality):
+    def _parse_m3u(self, m3u_link, name, quality):
         base_url = os.path.dirname(m3u_link)
         subtitle = {}
         audio = {}
@@ -57,7 +57,7 @@ class Downloadable(ABC):
             quality = quality_list.index(min(quality_list))
 
         for media in playlists[quality].media:
-            if media.language == language:
+            if media.name == name:
 
                 if media.type == 'SUBTITLES' and media.group_id == 'sub-main':
 
@@ -69,14 +69,15 @@ class Downloadable(ABC):
                         break
 
         for media in playlists[quality].media:
-            if media.type == 'AUDIO' and 'Audio Description' not in media.name:
-                audio = {'url': f'{base_url}/{media.uri}'}
-                if media.group_id == 'eac-3':
-                    audio['extension'] = '.eac3'
-                elif media.group_id in ['aac-128k', 'aac-64k']:
-                    audio['url'] = f'{base_url}/{media.uri}'
-                    audio['extension'] = '.aac'
-                audio['lang'] = media.language
-                break
-
+            if media.name == name:
+                if media.type == 'AUDIO':
+                    audio = {'url': f'{base_url}/{media.uri}'}
+                    if media.group_id == 'eac-3':
+                        audio['extension'] = '.eac3'
+                    elif media.group_id in ['aac-128k', 'aac-64k']:
+                        audio['url'] = f'{base_url}/{media.uri}'
+                        audio['extension'] = '.aac'
+                    audio['lang'] = media.language
+                    break
+        print(audio)
         return subtitle, audio

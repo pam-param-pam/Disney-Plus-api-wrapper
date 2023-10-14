@@ -244,12 +244,17 @@ class Auth:
         except AuthException:
             Auth.refreshToken()
             response = Auth.make_request(url, True, json)
-        if not response.json()["data"]:
-            errors = []
-            for error in response.json()["errors"]:
-                errors.append(error)
-            raise GraphqlException(errors)
 
+        # This method is used universally, including for downloads where the API response does not include ["data"],
+        # hence it can be safely ignored since we are not utilizing the GraphQL endpoint and don't need to handle their errors.
+        try:
+            if not response.json()["data"]:
+                errors = []
+                for error in response.json()["errors"]:
+                    errors.append(error)
+                raise GraphqlException(errors)
+        except KeyError:
+            pass
         return response
 
     def get_auth_token(self):

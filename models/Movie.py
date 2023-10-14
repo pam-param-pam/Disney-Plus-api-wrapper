@@ -15,6 +15,7 @@ class Movie(Hit):
         self._subtitles = None
         self._audio_tracks = None
         self.internal_title = None
+        self.original_language = None
 
     @property
     def subtitles(self):

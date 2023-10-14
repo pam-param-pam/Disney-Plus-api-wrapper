@@ -6,7 +6,7 @@ from models.HitType import HitType
 
 from models.Participant import Participant
 from models.Profile import Profile
-from models.Subtitles import Subtitles
+from models.Subtitle import Subtitle
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -75,17 +75,18 @@ def parse_hits(hits_json, search=False):
             if search:
                 hit_json = hit_json["hit"]
             contentId = hit_json["contentId"]
-            is_program = True
+            is_movie = True
             try:
-                # film
+                # on default, we think program is a movie
                 title = hit_json["text"]["title"]["full"]["program"]["default"]["content"]
             except KeyError:
-                # series
-                is_program = False
+                # KeyError means it's not a movie so program is a series
+                is_movie = False
                 title = hit_json["text"]["title"]["full"]["series"]["default"]["content"]
-            if is_program:
+            if is_movie:
                 hit_type = HitType.MOVIE
                 hit = Movie(title=title, movie_id=contentId, hit_type=hit_type)
+                hit.original_language = hit_json["originalLanguage"]
 
                 hit.internal_title = hit_json["internalTitle"]
                 hit.format = hit_json["mediaMetadata"]["format"]
@@ -121,6 +122,7 @@ def parse_audio_and_subtitles(string_json, media_id):
         features = audio_track["features"]
         language = audio_track["language"]
         name = audio_track["renditionName"]
+
         track_type = audio_track["trackType"]
         audio_track = AudioTrack(features=features, name=name, media_id=media_id, language=language,
                                  track_type=track_type)
@@ -130,8 +132,9 @@ def parse_audio_and_subtitles(string_json, media_id):
     for audio_track in string_json["mediaMetadata"]["captions"]:
         language = audio_track["language"]
         name = audio_track["renditionName"]
+
         track_type = audio_track["trackType"]
-        subtitle = Subtitles(name=name, language=language, media_id=media_id, track_type=track_type)
+        subtitle = Subtitle(name=name, language=language, media_id=media_id, track_type=track_type)
         subtitles.append(subtitle)
 
     return audio_tracks, subtitles
