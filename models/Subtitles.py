@@ -10,7 +10,6 @@ from models.Downloadable import Downloadable
 from utils.helper import rename_filename
 
 
-
 class Subtitles(Downloadable):
 
     def __init__(self, language, name, media_id, track_type):
@@ -134,4 +133,3 @@ class Subtitles(Downloadable):
         subtitle, _ = self.parse_m3u(m3u8_url, self.language, "min")
 
         self.get_subtitles(subtitle, name)
-        return os.path.join(APIConfig.default_path, name + ".srt")

@@ -1,3 +1,4 @@
+from Auth import Auth
 from Config import APIConfig
 from Exceptions import ApiException
 
@@ -16,9 +17,7 @@ class Season:
         self.number = number
 
     def get_episodes(self):
-        res = APIConfig.session.get(
-            f"https://disney.content.edge.bamgrid.com/svc/content/DmcEpisodes/version/5.1/region/{APIConfig.region}/audience/false/maturity/1850/language/{APIConfig.language}/seasonId/{self.id}/pageSize/60/page/1",
-            headers={"authorization": "Bearer " + APIConfig.token}, timeout=10)
+        res = Auth.make_get_request(f"https://disney.content.edge.bamgrid.com/svc/content/DmcEpisodes/version/5.1/region/{APIConfig.region}/audience/false/maturity/1850/language/{APIConfig.language}/seasonId/{self.id}/pageSize/60/page/1")
 
         if res.status_code != 200:
             raise ApiException(res)

@@ -1,5 +1,5 @@
+from Auth import Auth
 from Config import APIConfig
-from Exceptions import ApiException
 from models.Hit import Hit
 from models.HitType import HitType
 from models.Season import Season
@@ -17,12 +17,7 @@ class Series(Hit):
         return self._get_more_data()
 
     def _get_more_data(self):
-        res = APIConfig.session.get(
-            f"https://disney.content.edge.bamgrid.com/svc/content/DmcSeriesBundle/version/5.1/region/{APIConfig.region}/audience/false/maturity/1850/language/{APIConfig.language}/encodedSeriesId/{self.encoded_series_id}",
-            headers={"authorization": "Bearer " + APIConfig.token})
-
-        if res.status_code != 200:
-            raise ApiException(res)
+        res = Auth.make_get_request(f"https://disney.content.edge.bamgrid.com/svc/content/DmcSeriesBundle/version/5.1/region/{APIConfig.region}/audience/false/maturity/1850/language/{APIConfig.language}/encodedSeriesId/{self.encoded_series_id}")
 
         res_json = res.json()["data"]["DmcSeriesBundle"]
         self._full_description = res_json["series"]["text"]["description"]["full"]["series"]["default"]["content"]
@@ -53,10 +48,6 @@ class Series(Hit):
         return seasons
 
     def get_related(self):
+        res = Auth.make_get_request(f"https://disney.content.edge.bamgrid.com/svc/content/RelatedItems/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/encodedSeriesId/{self.encoded_series_id}")
 
-        res = APIConfig.session.get(
-            f"https://disney.content.edge.bamgrid.com/svc/content/RelatedItems/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/encodedSeriesId/{self.encoded_series_id}",
-            headers={"authorization": "Bearer " + APIConfig.token})
-        if res.status_code != 200:
-            raise ApiException(res)
         return parse_hits(res.json()["data"]["RelatedItems"]["items"])

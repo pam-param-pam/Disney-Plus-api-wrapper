@@ -22,8 +22,8 @@ class AudioTrack(Downloadable):
 
     def download_audio(self, m3u8_url, output):
         os.system(
-            f'ffmpeg -i "{m3u8_url}" -c copy "{output}" -preset ultrafast -loglevel warning -hide_banner -stats')
-        #-protocol_whitelist file,http,https,tcp,tls,crypto
+            f'ffmpeg -protocol_whitelist file,http,https,tcp,tls,crypto -i "{m3u8_url}" -c copy "{output}" -preset ultrafast -loglevel warning -hide_banner -stats')
+
     def _get_audio(self, audio, name):
         path = os.path.join(APIConfig.default_path, name + audio["extension"])
         self.download_audio(audio["url"], path)
@@ -33,8 +33,6 @@ class AudioTrack(Downloadable):
         if not name:
             name = self.media_id
         name = rename_filename(name)
-        os.makedirs(APIConfig.default_path, exist_ok=True)
-
         m3u8_url = self.get_m3u8_url(self.media_id)
 
         _, audio = self.parse_m3u(m3u8_url, self.language, quality)
