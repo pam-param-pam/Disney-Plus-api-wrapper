@@ -62,7 +62,7 @@ from models.ProgramType import MovieType, SeriesType
 # Search by program type
 print(api.search_program_type(MovieType.ALL))
 # or
-api.search_program_type(SeriesType.KIDS)
+print(api.search_program_type(SeriesType.KIDS))
 
 ```
 

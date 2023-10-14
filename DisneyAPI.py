@@ -96,6 +96,9 @@ class DisneyAPI:
         return profiles
 
     def get_active_profile(self):
+        """https://global.edge.bamgrid.com/accounts/me/active-profile
+        possible duplicate"""
+
         graphql_query = {
             "query": """
                 query {
@@ -110,6 +113,7 @@ class DisneyAPI:
                 fragment profile on Profile {
                     id
                     name
+                    
 
                     attributes {
                         avatar {
@@ -131,7 +135,6 @@ class DisneyAPI:
             "variables": {}
         }
         res = Auth.make_post_request("https://disney.api.edge.bamgrid.com/v1/public/graphql", json=graphql_query)
-
         profile = res.json()["data"]["me"]["account"]["activeProfile"]
         return parse_profile(profile)
 

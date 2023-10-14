@@ -46,7 +46,7 @@ class Auth:
         header = {"authorization": f"Bearer {client_apikey}", "Origin": "https://www.disneyplus.com"}
         res = APIConfig.session.post(url=self._devices_url, headers=header, json=postdata)
 
-        if res.status_code != 200:
+        if not res.ok:
             raise AuthException(res)
 
         assertion = res.json()["assertion"]
@@ -68,7 +68,7 @@ class Auth:
 
         res = APIConfig.session.post(url=self._token_url, headers=header, data=post_date)
 
-        if res.status_code != 200:
+        if not res.ok:
             raise AuthException(res)
 
         access_token = res.json()["access_token"]
@@ -90,7 +90,7 @@ class Auth:
         data = {'email': self._email, 'password': self._password}
         res = APIConfig.session.post(url=self._login_url, data=json.dumps(data), headers=headers)
 
-        if res.status_code != 200:
+        if not res.ok:
             raise AuthException(res)
 
         id_token = res.json()["id_token"]
@@ -114,7 +114,7 @@ class Auth:
 
         res = APIConfig.session.post(url=self._grant_url, data=json.dumps(data), headers=headers)
 
-        if res.status_code != 200:
+        if not res.ok:
             raise AuthException(res)
 
         assertion = res.json()["assertion"]
@@ -136,7 +136,7 @@ class Auth:
 
         res = APIConfig.session.post(url=self._token_url, headers=header, data=postdata)
 
-        if res.status_code != 200:
+        if not res.ok:
             raise AuthException(res)
         access_token = res.json()["access_token"]
         expires_in = res.json()["expires_in"]
@@ -180,7 +180,7 @@ class Auth:
             res = APIConfig.session.post(url="https://disney.api.edge.bamgrid.com/graph/v1/device/graphql",
                                          json=graph_mutation,
                                          headers={"authorization": APIConfig.auth._client_api_key()})
-            if res.status_code != 200:
+            if not res.ok:
                 raise AuthException(res)
 
             if not res.json()["data"]:
@@ -222,7 +222,7 @@ class Auth:
                 res = APIConfig.session.get(url=url, headers=headers, timeout=10)
         if res.status_code == 401:
             raise AuthException(res)
-        if res.status_code != 200:
+        if not res.ok:
             raise ApiException(res)
 
         return res
