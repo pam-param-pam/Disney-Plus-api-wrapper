@@ -135,7 +135,6 @@ class DisneyAPI:
             "variables": {}
         }
         res = Auth.make_post_request("https://disney.api.edge.bamgrid.com/v1/public/graphql", json=graphql_query)
-        print(res.text)
         profile = res.json()["data"]["me"]["account"]["activeProfile"]
         return parse_profile(profile)
 
