@@ -1,10 +1,11 @@
 
 # Disney+ API wrapper
 
-A future rich api wrapper for Disney+ made with python.
+A future rich API wrapper for Disney+ made with python.
 
 
 ## Requirements
+Library was tested on those versions, however feel free to try different ones.
 ```
 pip install pysubs2==1.6.1
 pip install m3u8==3.6.0

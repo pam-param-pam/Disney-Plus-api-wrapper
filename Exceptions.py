@@ -15,3 +15,7 @@ class GraphqlException(Exception):
     def __init__(self, response: list):
         self.message = response
         super().__init__(str(response))
+
+class FFmpegException(Exception):
+    def __init__(self):
+        super().__init__("Unknown ffmpeg error occured")
