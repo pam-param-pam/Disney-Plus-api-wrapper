@@ -231,11 +231,24 @@ class Auth:
     def make_get_request(url, json=None):
         try:
             response = Auth.make_request(url, False, json)
-        except AuthException:
+        except AuthException as e:
             Auth.refreshToken()
             response = Auth.make_request(url, False, json)
 
         return response
+
+    @staticmethod
+    def make_stream_request(url):
+        headers = {
+            'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"}
+
+        res = APIConfig.session.get(url=url, headers=headers, stream=True, timeout=10)
+        if res.status_code == 401:
+            raise AuthException(res)
+        if not res.ok:
+            raise ApiException(res)
+
+        return res
 
     @staticmethod
     def make_post_request(url, json=None):

@@ -79,5 +79,4 @@ class Downloadable(ABC):
                         audio['extension'] = '.aac'
                     audio['lang'] = media.language
                     break
-        print(audio)
         return subtitle, audio

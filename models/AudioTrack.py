@@ -1,8 +1,15 @@
+import logging
 import os
+import time
 
 from Config import APIConfig
+from Exceptions import FFmpegException
 from models.Downloadable import Downloadable
 from utils.helper import rename_filename
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 class AudioTrack(Downloadable):
 
@@ -19,14 +26,10 @@ class AudioTrack(Downloadable):
     def __repr__(self):
         return self.name
 
-    def _download_audio(self, m3u8_url, output):
-        os.system(
-            f'ffmpeg -protocol_whitelist file,http,https,tcp,tls,crypto -report -i "{m3u8_url}" -c copy "{output}" -preset ultrafast -loglevel warning -hide_banner -stats')
-
-    def _get_audio(self, audio, name):
-        path = os.path.join(APIConfig.default_path, name + audio["extension"])
-        self._download_audio(audio["url"], path)
-        return path
+    def _ffmpeg_download(self, url, path):
+        if os.system(
+                f'ffmpeg -protocol_whitelist file,http,https,tcp,tls,crypto -y -i "{url}" -c copy "{path}" -preset ultrafast -loglevel warning -hide_banner -stats') != 0:
+            raise FFmpegException()
 
     def download(self, name=None, quality="max"):
         if not name:
@@ -35,5 +38,7 @@ class AudioTrack(Downloadable):
         m3u8_url = self._get_m3u8_url(self.media_id)
 
         _, audio = self._parse_m3u(m3u8_url, self.name, quality)
+        path = os.path.join(APIConfig.default_path, name + audio["extension"])
+        self._ffmpeg_download(audio["url"], path)
 
-        return self._get_audio(audio, name)
+        return path

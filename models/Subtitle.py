@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pysubs2
 
+from Auth import Auth
 from Config import APIConfig
 from models.Downloadable import Downloadable
 from utils.helper import rename_filename
@@ -86,18 +87,12 @@ class Subtitle(Downloadable):
         for i in reversed(delete_list):
             del subs[i]
         return subs
-    def _get_subtitles(self, subtitle, name):
-        folder_path = os.path.join(APIConfig.default_path, "tmp")
-        os.makedirs(folder_path, exist_ok=True)
-
-        self._download_subtitle(subtitle['urls'], folder_path, name)
 
     def _download_subtitle(self, urls, folder_path, name):
         cnt = 0
-        headers = {
-            'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"}
+
         for url in urls:
-            res = APIConfig.session.get(url, headers=headers, stream=True, timeout=10)
+            res = Auth.make_stream_request(url)
             with open(os.path.join(folder_path, f"{str(cnt)}.srt"), 'wb') as file:
                 for data in res.iter_content(chunk_size=1024):
                     file.write(data)
@@ -132,4 +127,7 @@ class Subtitle(Downloadable):
 
         subtitle, _ = self._parse_m3u(m3u8_url, self.name, "min")
 
-        self._get_subtitles(subtitle, name)
+        folder_path = os.path.join(APIConfig.default_path, "tmp")
+        os.makedirs(folder_path, exist_ok=True)
+
+        self._download_subtitle(subtitle['urls'], folder_path, name)
