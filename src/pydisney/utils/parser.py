@@ -66,8 +66,8 @@ def parse_profile(profile_json):
 def parse_hits(hits_json, search=False):
     # lazy importing to avoid circular import
     # im dumb and can't design the module structure better
-    from models.Series import Series
-    from models.Movie import Movie
+    from ..models.Series import Series
+    from ..models.Movie import Movie
 
     hits = []
     for hit_json in hits_json:
