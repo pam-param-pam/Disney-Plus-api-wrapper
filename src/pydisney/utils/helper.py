@@ -2,7 +2,7 @@ import json
 import re
 from datetime import timedelta, datetime
 
-from Config import APIConfig
+from ..Config import APIConfig
 
 
 def rename_filename(filename):

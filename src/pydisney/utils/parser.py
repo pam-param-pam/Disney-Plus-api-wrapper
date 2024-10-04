@@ -1,12 +1,12 @@
 import logging
 
-from models.Actor import Actor
-from models.AudioTrack import AudioTrack
-from models.HitType import HitType
+from ..models.Actor import Actor
+from ..models.AudioTrack import AudioTrack
+from ..models.HitType import HitType
 
-from models.Participant import Participant
-from models.Profile import Profile
-from models.Subtitle import Subtitle
+from ..models.Participant import Participant
+from ..models.Profile import Profile
+from ..models.Subtitle import Subtitle
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
