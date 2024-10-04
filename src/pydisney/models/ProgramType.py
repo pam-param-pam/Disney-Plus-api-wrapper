@@ -9,7 +9,7 @@ class MovieType(Enum):
     COMEDY = "d3e78d24-457c-4a36-ac1c-808e457e4d64"
     DOCUMENTARY = "6466e067-ef14-46b2-bda9-09b2fd02d9d9"
     DRAMA = "ca16db0d-be4b-45ee-b0a7-71bc6f896562"
-    IMAX_ENHANCED= "a7496073-606c-4795-97b7-e947dfdca1de"
+    IMAX_ENHANCED = "a7496073-606c-4795-97b7-e947dfdca1de"
     ROMANTIC_COMEDIES = "b9f7a7f9-120d-4be6-920e-2e8a8a8cdd50"
     SCIENCE_FICTION = "05ad34d3-9375-40a6-a117-ae8f8080e6e9"
     SHORTS = "34c856af-325c-4603-8d6b-dd9dc4695a69"

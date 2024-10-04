@@ -1,6 +1,5 @@
 import logging
 import os
-import time
 
 from Config import APIConfig
 from Exceptions import FFmpegException

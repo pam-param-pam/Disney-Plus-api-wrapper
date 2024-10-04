@@ -229,6 +229,7 @@ class Auth:
 
     @staticmethod
     def make_get_request(url, json=None):
+
         try:
             response = Auth.make_request(url, False, json)
         except AuthException as e:
