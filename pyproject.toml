@@ -9,7 +9,7 @@ name = "pydisney"
 version = "1.0.0"
 description = "A Feature rich API wrapper for Disney+ made with python."
 readme = "README.md"
-authors = [{ name = "Pamparampampam", email = "reallpamparampam.pl@gmail.com" }]
+authors = [{ name = "Pamparampampam"}]
 license = { file = "LICENSE" }
 classifiers = [
     "License :: OSI Approved :: MIT License",
