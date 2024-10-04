@@ -1,5 +1,5 @@
-from Auth import Auth
-from Config import APIConfig
+from ..Auth import Auth
+from ..Config import APIConfig
 
 
 class Avatar:
