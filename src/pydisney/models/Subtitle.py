@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pysubs2
 
-from Auth import Auth
-from Config import APIConfig
-from models.Downloadable import Downloadable
-from utils.helper import rename_filename
+from ..Auth import Auth
+from ..Config import APIConfig
+from ..models.Downloadable import Downloadable
+from ..utils.helper import rename_filename
 
 
 class Subtitle(Downloadable):

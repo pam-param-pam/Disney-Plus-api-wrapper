@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from models.HitType import HitType
+from ..models.HitType import HitType
 
 
 class Hit(ABC):

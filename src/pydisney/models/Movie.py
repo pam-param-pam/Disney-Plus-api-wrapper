@@ -1,8 +1,8 @@
-from Auth import Auth
-from Config import APIConfig
-from models.Hit import Hit
-from models.HitType import HitType
-from utils.parser import parse_participants, parse_hits, parse_audio_and_subtitles
+from ..Auth import Auth
+from ..Config import APIConfig
+from ..models.Hit import Hit
+from ..models.HitType import HitType
+from ..utils.parser import parse_participants, parse_hits, parse_audio_and_subtitles
 
 
 class Movie(Hit):

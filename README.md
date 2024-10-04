@@ -5,7 +5,7 @@ A future rich API wrapper for Disney+ made with python.
 
 
 ## How to install
-    pip install zipfly64
+    pip install pydisney
 
 https://pypi.org/project/pydisney
 

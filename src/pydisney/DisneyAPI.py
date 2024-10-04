@@ -2,15 +2,15 @@ import logging
 from typing import Union, Dict
 
 
-from Auth import Auth
-from Config import APIConfig
-from models.Account import Account
-from models.Language import Language
-from models.Movie import Movie
-from models.ProgramType import MovieType, SeriesType
-from models.Rating import Rating
-from models.Series import Series
-from utils.parser import parse_hits, parse_profile
+from .Auth import Auth
+from .Config import APIConfig
+from .models.Account import Account
+from .models.Language import Language
+from .models.Movie import Movie
+from .models.ProgramType import MovieType, SeriesType
+from .models.Rating import Rating
+from .models.Series import Series
+from .utils.parser import parse_hits, parse_profile
 
 logging.basicConfig()
 

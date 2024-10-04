@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 import m3u8
 
-from Auth import Auth
+from ..Auth import Auth
 
 
 class Downloadable(ABC):

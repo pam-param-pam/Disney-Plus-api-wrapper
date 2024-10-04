@@ -1,9 +1,9 @@
-from Auth import Auth
-from Config import APIConfig
-from models.Hit import Hit
-from models.HitType import HitType
-from models.Season import Season
-from utils.parser import parse_participants, parse_hits
+from ..Auth import Auth
+from ..Config import APIConfig
+from ..models.Hit import Hit
+from ..models.HitType import HitType
+from ..models.Season import Season
+from ..utils.parser import parse_participants, parse_hits
 
 
 class Series(Hit):

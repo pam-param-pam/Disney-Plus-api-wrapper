@@ -4,9 +4,9 @@ import re
 from datetime import datetime
 from json import JSONDecodeError
 
-from Config import APIConfig
-from Exceptions import AuthException, ApiException, GraphqlException
-from utils.helper import update_file
+from .Config import APIConfig
+from .Exceptions import AuthException, ApiException, GraphqlException
+from .utils.helper import update_file
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

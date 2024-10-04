@@ -1,9 +1,9 @@
-from Auth import Auth
-from Config import APIConfig
-from Exceptions import ApiException
+from ..Auth import Auth
+from ..Config import APIConfig
+from ..Exceptions import ApiException
 
-from models.Episode import Episode
-from utils.parser import parse_audio_and_subtitles
+from ..models.Episode import Episode
+from ..utils.parser import parse_audio_and_subtitles
 
 
 class Season:

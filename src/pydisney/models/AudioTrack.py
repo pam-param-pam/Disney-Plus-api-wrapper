@@ -1,10 +1,10 @@
 import logging
 import os
 
-from Config import APIConfig
-from Exceptions import FFmpegException
-from models.Downloadable import Downloadable
-from utils.helper import rename_filename
+from ..Config import APIConfig
+from ..Exceptions import FFmpegException
+from ..models.Downloadable import Downloadable
+from ..utils.helper import rename_filename
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

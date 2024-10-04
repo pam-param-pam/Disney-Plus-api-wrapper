@@ -1,5 +1,5 @@
-from models.Avatar import Avatar
-from models.LanguagePreferences import LanguagePreferences
+from ..models.Avatar import Avatar
+from ..models.LanguagePreferences import LanguagePreferences
 
 
 class Profile:
