@@ -1,7 +1,7 @@
 
 # Disney+ API wrapper
 
-A future rich API wrapper for Disney+ made with python.
+A feature rich API wrapper for Disney+ made with python.
 
 
 ## How to install
