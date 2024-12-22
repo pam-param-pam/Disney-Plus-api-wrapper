@@ -8,7 +8,6 @@ class APIConfig:
     session = requests.Session()
     token = None
     refresh = None
-    token_expire = None
     sessionId = None
     default_path = "downloads"
     auth = None

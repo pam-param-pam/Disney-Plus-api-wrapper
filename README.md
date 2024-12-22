@@ -1,7 +1,7 @@
 
 # Disney+ API wrapper
 
-A future rich API wrapper for Disney+ made with python.
+A feature rich API wrapper for Disney+ made with python.
 
 
 ## How to install
@@ -19,71 +19,35 @@ api = DisneyAPI(email="email", password="password")
 searches = api.search("Star wars")
 print(searches[0].title) # prints title of the first search hit
 ```
-### Advanced usage
+### More examples
 
 ```python
-from pydisney import DisneyAPI
-from pydisney import HitType
-from pydisney import Language
-from pydisney import Rating
+from pydisney import DisneyAPI, Rating, Language
 
 # forces to use disney's login api instead of cached access and refresh tokens
-# sets proxies
-api = DisneyAPI(email="email", password="password", proxies={}, force_login=True)
+api = DisneyAPI(email="email", password="password", force_login=True)
 
-profileId = api.get_profiles()[0].id  # grabs the first profile's id
-print(api.set_active_profile(profileId)) # if profile is locked, pass pin as an argument
-print(api.get_active_profile())
+profile = api.get_profiles()  # grabs the first profile
+print(api.set_active_profile(profile.id)) # if profile is locked, pass pin as an argument
+active_profile = api.get_active_profile()
+active_profile.set_profile_language(Language.English_UK) # sets language to english, from now all data will be returned in that language
 
-api.set_language(Language.POLISH)  # sets language to Polish, from now all data will be returned in that language
 
-searches = api.search("Star wars", rating=Rating.AGE9PLUS)
+searches = api.search("Star wars")
 print(searches[0].title)
 
 # checks if the search hit is a series or a movie
-if searches[0].type == HitType.SERIES:
-    # prints s01e01's full description
-    print(searches[0].get_seasons()[0].get_episodes()[0].full_description)
-
-if searches[0].type == HitType.MOVIE:
-    print(searches[0].length)  # returns in milliseconds
+if searches[0].is_movie:
+    print(searches[0].durationMs)  # returns in milliseconds
     print(searches[0].cast)
-    print(searches[0].audio_tracks)
-    print(searches[0].subtitles)
 
+else:
+    # prints s01e01's full description
+    print(searches[0].seasons[0].episodes[0].full_description)
 ```
 
-### More examples
-```python
-from pydisney import MovieType, SeriesType
+Docs? What docs, read the source code. 😎
 
-# Search by program type
-print(api.search_program_type(MovieType.ALL))
-# or
-print(api.search_program_type(SeriesType.KIDS))
-
-```
-
-### Downloading subtitles
-
-```python
-# by default download path is downloads/
-api.set_download_path("custom/downloads")
-search = api.search_movies("star wars")[0]
-subs = search.subtitles
-for sub in subs:
-    if sub.language == "pl":
-        sub.download(name="name")
-```
-### Downloading audio
-
-```python
-search = api.search_series("marvel")[0].get_seasons()[0].get_episodes()[0]
-audios = search.audio_tracks
-for audio in audios:
-    if audio.language == "pl":
-        audio.download(name="name", quality="max")  # allowed max or min, feel free to make a PR to add custom ones
-```
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first

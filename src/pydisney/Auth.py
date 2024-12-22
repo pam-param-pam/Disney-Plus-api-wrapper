@@ -3,17 +3,20 @@ import logging
 import re
 from datetime import datetime
 from json import JSONDecodeError
+from typing import List
+
+import requests
 
 from .Config import APIConfig
-from .Exceptions import AuthException, ApiException, GraphqlException
+from .Exceptions import AuthException, ApiException
 from .utils.helper import update_file
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("pydisney")
+logger = logger.getChild("Auth")
 
 
 class Auth:
-    def __init__(self, email, password, proxies, force_login):
+    def __init__(self, email, password, force_login):
         self._email = email
         self._force_login = force_login
         self._password = password
@@ -23,8 +26,6 @@ class Auth:
         self._token_url = "https://disney.api.edge.bamgrid.com/token"
         self._grant_url = 'https://disney.api.edge.bamgrid.com/accounts/grant'
 
-        if proxies:
-            APIConfig.session.proxies.update(proxies)
         APIConfig.auth = self
 
     def _client_api_key(self):
@@ -199,8 +200,9 @@ class Auth:
             update_file()
 
     @staticmethod
-    def make_request(url, is_post, json=None):
-        headers = {
+    def make_request(method: str, url: str, data: dict = None, headers: dict = None, params: dict = None, files: dict = None) -> dict:
+        logger.debug(f"Calling... Url={url}, Method={method}, Headers={headers}")
+        default_headers = {
             'accept': 'application/vnd.media-service+json; version=6',
             'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
             'x-bamsdk-platform': "macOS",
@@ -210,33 +212,60 @@ class Auth:
             'Origin': 'https://www.disneyplus.com',
             'authorization': APIConfig.token
         }
-        if is_post:
-            if json:
-                res = APIConfig.session.post(url=url, json=json, headers=headers, timeout=10)
-            else:
-                res = APIConfig.session.post(url=url, headers=headers, timeout=10)
-        else:
-            if json:
-                res = APIConfig.session.get(url=url, json=json, headers=headers, timeout=10)
-            else:
-                res = APIConfig.session.get(url=url, headers=headers, timeout=10)
-        if res.status_code == 401:
-            raise AuthException(res)
-        if not res.ok:
-            raise ApiException(res)
 
-        return res
+        if params is None:
+            params = {}
+
+        if headers is None:
+            headers = {}
+        headers.update(default_headers)
+        response = requests.request(method, url, headers=headers, json=data, params=params, files=files)
+
+        if not response.ok:
+            raise ApiException(response)
+
+        if response.status_code == 200:
+            return response.json()
 
     @staticmethod
-    def make_get_request(url, json=None):
+    def make_pagination_request(method: str, url: str, data: dict = None, headers: dict = None, params: dict = None, files: dict = None) -> List[dict]:
+        if params is None:
+            params = {}
+        params.setdefault('limit', 200)
+        params.setdefault('offset', 0)
 
-        try:
-            response = Auth.make_request(url, False, json)
-        except AuthException as e:
-            Auth.refreshToken()
-            response = Auth.make_request(url, False, json)
+        aggregated_results = []
+        current_offset = params['offset']
+        limit = params['limit']
 
-        return response
+        while True:
+            logger.debug(f"Fetching page with offset={current_offset}, limit={limit}")
+            params['offset'] = current_offset
+
+            # Use the existing make_request method
+            response_json = Auth.make_request(
+                method=method,
+                url=url,
+                data=data,
+                headers=headers,
+                params=params,
+                files=files
+            )
+
+            from .utils.parser import find_pagination_values  # circular import
+            pagination_values = find_pagination_values(response_json)
+
+            logger.debug(f"Pagination Values: {pagination_values}")
+
+            aggregated_results.append(response_json)
+
+            # Check if there are more pages
+            if pagination_values and pagination_values.get('hasMore', False):
+                current_offset += limit
+            else:
+                break
+
+        return aggregated_results
 
     @staticmethod
     def make_stream_request(url):
@@ -250,26 +279,6 @@ class Auth:
             raise ApiException(res)
 
         return res
-
-    @staticmethod
-    def make_post_request(url, json=None):
-        try:
-            response = Auth.make_request(url, True, json)
-        except AuthException:
-            Auth.refreshToken()
-            response = Auth.make_request(url, True, json)
-
-        # This method is used universally, including for downloads where the API response does not include ["data"],
-        # hence it can be safely ignored since we are not utilizing the GraphQL endpoint and don't need to handle their errors.
-        try:
-            if not response.json()["data"]:
-                errors = []
-                for error in response.json()["errors"]:
-                    errors.append(error)
-                raise GraphqlException(errors)
-        except KeyError:
-            pass
-        return response
 
     def get_auth_token(self):
         if self._force_login:
