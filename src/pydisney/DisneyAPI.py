@@ -1,11 +1,10 @@
 import logging
-from typing import Union, Optional, List
+from typing import Optional, List
 
 from .Auth import Auth
 from .Config import APIConfig
 from .models.Account import Account
 from .models.Hit import Hit
-from .models.Language import Language
 from .models.Profile import Profile
 from .models.ProgramType import MovieType, SeriesType
 from .utils.parser import parse_profile
@@ -29,8 +28,8 @@ logger.addHandler(console_handler)
 class DisneyAPI:
     def __init__(self, email: str, password: str, force_login: bool = False):
 
-        auth = Auth(email=email, password=password, force_login=force_login)
-        auth.get_auth_token()
+        self._auth = Auth(email=email, password=password, force_login=force_login)
+        self._auth.get_auth_token()
 
         self.device_id = None
         self.device_platform = None
@@ -125,8 +124,6 @@ class DisneyAPI:
         return profiles
 
     def get_active_profile(self) -> Profile:
-        """https://global.edge.bamgrid.com/accounts/me/active-profile
-        possible duplicate"""
         graphql_query = {
             "query": """
                 query {
@@ -141,8 +138,6 @@ class DisneyAPI:
                 fragment profile on Profile {
                     id
                     name
-                    
-
                     attributes {
                         avatar {
                             id
@@ -157,7 +152,6 @@ class DisneyAPI:
                             appLanguage
                         }
                     }
-
                 }
             """,
             "variables": {}
@@ -167,31 +161,7 @@ class DisneyAPI:
         return parse_profile(profile)
 
     def set_active_profile(self, profile_id: str, pin: str = None) -> None:
-        graphql_mutation = {
-            "query": """
-                mutation switchProfile($input: SwitchProfileInput!) {
-                    switchProfile(switchProfile: $input) {
-                        account {
-                            ...account
-                        }
-                    }
-                }
-                fragment account on Account {
-                    id
-                }
-            """,
-            "variables": {
-                "input": {
-                    "profileId": profile_id,
-                    "entryPin": pin
-
-                }
-            },
-            "operationName": "switchProfile"
-        }
-        res = Auth.make_request("POST", "https://disney.api.edge.bamgrid.com/v1/public/graphql", data=graphql_mutation)
-
-        APIConfig.token = res["extensions"]["sdk"]["token"]["accessToken"]
+        self._auth.set_active_profile(APIConfig.token, profile_id, pin)
 
     def _account_init(self):
         graphql_query = {
@@ -243,21 +213,21 @@ class DisneyAPI:
     def _session_init(self):
         graphql_query = {
             "query": """
-                        query {
-                            me {
-                                activeSession {
-                                    ...session
-                                }
-                            }
+                query {
+                    me {
+                        activeSession {
+                            ...session
                         }
-                        fragment session on Session {
-                             device {
-                                id
-                             platform
-                             }
-                            sessionId
-                        }
-                    """,
+                    }
+                }
+                fragment session on Session {
+                     device {
+                        id
+                     platform
+                     }
+                    sessionId
+                }
+            """,
             "variables": {}
         }
         res = Auth.make_request("POST", "https://disney.api.edge.bamgrid.com/v1/public/graphql", data=graphql_query)
@@ -269,17 +239,6 @@ class DisneyAPI:
 
     def get_token(self) -> str:
         return APIConfig.token
-
-    def _get_categories(self) -> None:
-        #testing method
-        url = "https://disney.api.edge.bamgrid.com/explore/v1.7/page/page-c71e93ba-d2b6-4f7d-82a9-56c9d7d642e9?enhancedContainersLimit=111111"  # series
-        # url = "https://disney.api.edge.bamgrid.com/explore/v1.7/page/page-c44952c4-c788-44c3-bdf7-e99fca172f36?limit=0" # movies
-        res = Auth.make_request("GET", url)
-        items = res["data"]["page"]["containers"]
-        for item in items:
-            name = item["visuals"]["name"].replace(" ", "_")
-            id = item["id"]
-            print(name.upper() + " = \"" + id + "\"")
 
     def set_log_level(self, level: int) -> None:
         logger.setLevel(level)

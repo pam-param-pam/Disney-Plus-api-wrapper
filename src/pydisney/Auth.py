@@ -20,145 +20,108 @@ class Auth:
         self._email = email
         self._force_login = force_login
         self._password = password
-        self._web_page = 'https://www.disneyplus.com/login'
-        self._devices_url = "https://disney.api.edge.bamgrid.com/devices"
-        self._login_url = 'https://disney.api.edge.bamgrid.com/idp/login'
-        self._token_url = "https://disney.api.edge.bamgrid.com/token"
-        self._grant_url = 'https://disney.api.edge.bamgrid.com/accounts/grant'
-
         APIConfig.auth = self
 
-    def _client_api_key(self):
-        res = APIConfig.session.get(self._web_page)
-        match = re.search("window.server_path = ({.*});", res.text)
-        janson = json.loads(match.group(1))
-        clientapikey = janson["sdk"]["clientApiKey"]
-        return clientapikey
+    def _obtain_client_api_key(self):
+        """Step 1: Obtain client's api key by parsing html page..."""
+        res = APIConfig.session.get("https://www.disneyplus.com")
+        pattern = r'"clientId"\s*:\s*"([^"]+)"\s*,\s*"clientApiKey"\s*:\s*"([^"]+)"'
+        match = re.search(pattern, res.text)
 
-    def _assertion(self, client_apikey):
+        if match:
+            client_api_key = match.group(2)
+            return client_api_key
+        else:
+            raise AuthException("Unable to obtain client api key. Please open an issue.")
 
-        postdata = {
-            "applicationRuntime": "firefox",
-            "attributes": {},
-            "deviceFamily": "browser",
-            "deviceProfile": "macosx"
+    def _register_device(self, client_api_key):
+        """Step 2: Register a device with previously obtained client_api_key"""
+        graphql_query = {
+            "operationName": "registerDevice",
+            "query": "mutation registerDevice($input: RegisterDeviceInput!) { registerDevice(registerDevice: $input) { grant { grantType assertion }, activeSession { partnerName profile { id } } } }",
+            "variables": {
+                "input": {
+                    "deviceFamily": "N/A",
+                    "applicationRuntime": "N/A",
+                    "deviceProfile": "N/A",
+                    "deviceLanguage": "N/A",
+                    "devicePlatformId": "N/A",
+                    "attributes": {
+                        "brand": "N/A",
+                        "browserName": "N/A",
+                        "browserVersion": "N/A",
+                        "manufacturer": "N/A",
+                        "operatingSystem": "N/A",
+                        "operatingSystemVersion": "N/A",
+                    }
+                }
+            }
         }
-
-        header = {"authorization": f"Bearer {client_apikey}", "Origin": "https://www.disneyplus.com"}
-        res = APIConfig.session.post(url=self._devices_url, headers=header, json=postdata)
-
-        if not res.ok:
-            raise AuthException(res)
-
-        assertion = res.json()["assertion"]
-
-        return assertion
-
-    def _access_token(self, client_apikey, assertion):
-
-        header = {"authorization": f"Bearer {client_apikey}", "Origin": "https://www.disneyplus.com"}
-
-        post_date = {
-            "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
-            "latitude": "0",
-            "longitude": "0",
-            "platform": "browser",
-            "subject_token": assertion,
-            "subject_token_type": "urn:bamtech:params:oauth:token-type:device"
-        }
-
-        res = APIConfig.session.post(url=self._token_url, headers=header, data=post_date)
-
-        if not res.ok:
-            raise AuthException(res)
-
-        access_token = res.json()["access_token"]
+        res = APIConfig.session.post("https://disney.api.edge.bamgrid.com/graph/v1/device/graphql", json=graphql_query, headers={"Authorization": f"Bearer {client_api_key}"})
+        json_data = res.json()
+        access_token = json_data["extensions"]["sdk"]["token"]["accessToken"]
         return access_token
 
     def _login(self, access_token):
-        headers = {
-            'accept': 'application/json; charset=utf-8',
-            'authorization': "Bearer {}".format(access_token),
-            'content-type': 'application/json; charset=UTF-8',
-            'Origin': 'https://www.disneyplus.com',
-            'Referer': 'https://www.disneyplus.com/login/password',
-            'Sec-Fetch-Mode': 'cors',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36',
-            'x-bamsdk-platform': 'windows',
-            'x-bamsdk-version': '3.10',
+        """Step 3. Perform a login with access token obtained during register device"""
+        graphql_query = {
+            "query": "mutation login($input: LoginInput!) { login(login: $input) { actionGrant account { activeProfile { id } profiles { id attributes { isDefault parentalControls { isPinProtected } } } } activeSession { isSubscriber } identity { personalInfo { dateOfBirth gender } flows { personalInfo { requiresCollection eligibleForCollection } } } } }",
+            "variables": {
+                "input": {
+                    "email": self._email,
+                    "password": self._password
+                }
+            },
+            "operationName": "login"
         }
 
-        data = {'email': self._email, 'password': self._password}
-        res = APIConfig.session.post(url=self._login_url, data=json.dumps(data), headers=headers)
+        res = APIConfig.session.post("https://disney.api.edge.bamgrid.com/v1/public/graphql", json=graphql_query, headers={"Authorization": f"Bearer {access_token}"})
+        json_data = res.json()
+        profiles = json_data["data"]["login"]["account"]["profiles"]
+        access_token = json_data["extensions"]["sdk"]["token"]["accessToken"]
+        return access_token, profiles
 
-        if not res.ok:
-            raise AuthException(res)
-
-        id_token = res.json()["id_token"]
-        return id_token
-
-    def _grant(self, id_token, access_token):
-
-        headers = {
-            'accept': 'application/json; charset=utf-8',
-            'authorization': f"Bearer {access_token}",
-            'content-type': 'application/json; charset=UTF-8',
-            'Origin': 'https://www.disneyplus.com',
-            'Referer': 'https://www.disneyplus.com/login/password',
-            'Sec-Fetch-Mode': 'cors',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36',
-            'x-bamsdk-platform': 'windows',
-            'x-bamsdk-version': '3.10',
+    def set_active_profile(self, access_token, profile_id, pin=None):
+        """Step 4. Set an active profile. Only access token returned here can be used to query data"""
+        graphql_mutation = {
+            "query": """mutation switchProfile($input: SwitchProfileInput!) { switchProfile(switchProfile: $input) { account { ...account } } } fragment account on Account { id }""",
+            "variables": {
+                "input": {
+                    "profileId": profile_id,
+                    "entryPin": pin
+                }
+            },
+            "operationName": "switchProfile"
         }
+        res = APIConfig.session.post("https://disney.api.edge.bamgrid.com/v1/public/graphql", json=graphql_mutation, headers={"Authorization": f"Bearer {access_token}"})
+        json_data = res.json()
+        access_token = json_data["extensions"]["sdk"]["token"]["accessToken"]
+        refresh_token = json_data["extensions"]["sdk"]["token"]["refreshToken"]
+        return access_token, refresh_token
 
-        data = {'id_token': id_token}
+    def _get_valid_profile_id(self, profiles):
+        default_locked = False
+        for profile in profiles:
+            if profile["attributes"]["isDefault"]:
+                if profile["attributes"]["parentalControls"]["isPinProtected"]:
+                    default_locked = True
+                    logger.warning("Default profile is locked! Defaulting to a different one")
+            if default_locked and not profile["attributes"]["parentalControls"]["isPinProtected"]:
+                return profile["id"]
 
-        res = APIConfig.session.post(url=self._grant_url, data=json.dumps(data), headers=headers)
-
-        if not res.ok:
-            raise AuthException(res)
-
-        assertion = res.json()["assertion"]
-
-        return assertion
-
-    def _final_token(self, subject_token, client_apikey):
-
-        header = {"authorization": f"Bearer {client_apikey}", "Origin": "https://www.disneyplus.com"}
-
-        postdata = {
-            "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
-            "latitude": "0",
-            "longitude": "0",
-            "platform": "browser",
-            "subject_token": subject_token,
-            "subject_token_type": "urn:bamtech:params:oauth:token-type:account"
-        }
-
-        res = APIConfig.session.post(url=self._token_url, headers=header, data=postdata)
-
-        if not res.ok:
-            raise AuthException(res)
-        access_token = res.json()["access_token"]
-        expires_in = res.json()["expires_in"]
-        refresh_token = res.json()["refresh_token"]
-
-        return access_token, expires_in, refresh_token
+        raise AuthException("Unable to pick a profile: all profiles are locked. Manually set a profile and supply a PIN.")
 
     def _get_auth_token_tru_api(self):
         logger.info("Loging using disney's api")
         logger.warning("Loging using Disney's api repeatedly will cause account blocks")
-        clientapikey_ = self._client_api_key()
-        assertion_ = self._assertion(clientapikey_)
+        client_api_key = self._obtain_client_api_key()
+        device_access_token = self._register_device(client_api_key)
+        non_profile_access_token, profiles = self._login(device_access_token)
 
-        access_token_ = self._access_token(clientapikey_, assertion_)
-        id_token_ = self._login(access_token_)
-
-        user_assertion = self._grant(id_token_, access_token_)
-        token, expire, refresh = self._final_token(user_assertion, clientapikey_)
-
-        APIConfig.token = token
-        APIConfig.refresh = refresh
+        profile_id = self._get_valid_profile_id(profiles)
+        access_token, refresh_token = self.set_active_profile(non_profile_access_token, profile_id)
+        APIConfig.token = access_token
+        APIConfig.refresh = refresh_token
         update_file()
 
     @staticmethod
@@ -178,9 +141,10 @@ class Auth:
                 },
                 "operationName": "refreshToken"
             }
+
             res = APIConfig.session.post(url="https://disney.api.edge.bamgrid.com/graph/v1/device/graphql",
                                          json=graph_mutation,
-                                         headers={"authorization": APIConfig.auth._client_api_key()})
+                                         headers={"authorization": APIConfig.auth._obtain_client_api_key()})
             if not res.ok:
                 raise AuthException(res)
 

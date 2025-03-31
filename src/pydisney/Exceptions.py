@@ -1,10 +1,15 @@
+from typing import Union
+
 from requests import Response
 
 
 class AuthException(Exception):
-    def __init__(self, message: Response):
-        self.message = message
-        super().__init__(f"{self.message.text}\n{self.message.status_code}")
+    def __init__(self, message: Union[Response, str]):
+        if isinstance(message, Response):
+            self.message = f"{message.text}\n{message.status_code}"
+        else:
+            self.message = message
+        super().__init__()
 
 class ApiException(Exception):
     def __init__(self, response: Response):

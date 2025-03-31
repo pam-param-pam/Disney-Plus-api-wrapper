@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pydisney"
-version = "2.0.0"
+version = "2.1.0"
 description = "A Feature rich API wrapper for Disney+ made with python."
 readme = "README.md"
 authors = [{ name = "Pamparampampam"}]
@@ -18,9 +18,7 @@ classifiers = [
 ]
 keywords = ["disney", "disneyplus", "api", "wrapper", "client", "python", "pydisney"]
 dependencies = [
-    "pysubs2 == 1.6.1",
-    "m3u8 == 3.6.0",
-    "requests >= 2.31.0"
+    "requests >= 2.32.3"
 ]
 requires-python = ">=3.7"
 
