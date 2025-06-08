@@ -2,17 +2,16 @@ import logging
 from abc import ABC
 from typing import List, Optional
 
-from src.pydisney.Auth import Auth
-from src.pydisney.Config import APIConfig
-from src.pydisney.models.Season import Season
-from src.pydisney.utils.parser import safe_get
+from ..Auth import Auth
+from ..models.Downloable import MediaTrackSelector
+from ..models.Season import Season
+from ..utils.parser import safe_get
 
 logger = logging.getLogger("pydisney")
 logger = logger.getChild("Hit")
 
 
 class Hit(ABC):
-
     def __init__(self, data):
         self.id: Optional[str] = None
         self.title: Optional[str] = None
@@ -31,10 +30,10 @@ class Hit(ABC):
         self.__credits: Optional[dict] = None
         self.__release_date: Optional[str] = None
         self.__length: Optional[int] = None
+        self.__resource_id: Optional[str] = None
         self._parse_data(data)
 
     def _parse_data(self, data):
-
         self.id = data["id"]
         self.title = data["visuals"]["title"]
         self.brief_desc = safe_get(data, ["visuals", "description", "brief"])
@@ -87,13 +86,20 @@ class Hit(ABC):
         return self.__endYear
 
     @property
-    def release_date(self):
-        if not self.__release_date:
-            self._get_from_old_api()
-        return self.__release_date
+    def resourceId(self):
+        if not self.is_movie:
+            raise ValueError("Series has no resourceId property")
+        if not self.__resource_id:
+            self._get_playback_info()
+        return self.__resource_id
+
+    def _get_playback_info(self):
+        url = "https://disney.api.edge.bamgrid.com/explore/v1.9/deeplink?action=playback&refId=9a280e53-fcc0-4e17-a02c-b1f40913eb0b&refIdType=deeplinkId"
+        res = Auth.make_request("GET", url)
+        self.__resource_id = res["data"]["deeplink"]["actions"][0]["resourceId"]
 
     def _get_more_data(self) -> None:
-        url = f"https://disney.api.edge.bamgrid.com/explore/v1.7/page/entity-{self.id}"
+        url = f"https://disney.api.edge.bamgrid.com/explore/v1.9/page/entity-{self.id}"
         res = Auth.make_request("GET", url)
         self.__is_movie = True
         for container in res["data"]["page"]["containers"]:
@@ -118,52 +124,25 @@ class Hit(ABC):
                 self.__endYear = safe_get(container, ["visuals", "metastringParts", "releaseYearRange", "endYear"], ignoreError=True)
                 self.__length = safe_get(container, ["visuals", "duration", "runtimeMs"])
 
-    def _get_from_old_api(self) -> None:
-        logger.info("Attempting to fetch data from old api")
+    def _get_m3u8_url(self):
+        playback_link = "https://disney.playback.edge.bamgrid.com/v7/playback/ctr-regular"
+        data = {"playback": {"attributes": {}}, "playbackId": self.resourceId}
 
-        res = Auth.make_request("GET",
-                                f"https://disney.content.edge.bamgrid.com/svc/search/disney/version/5.1/region/{APIConfig.region}/audience/k-false,l-true/maturity/1850/language/{APIConfig.language}/queryType/ge/pageSize/1/query/{self.title}")
-        item = res["data"]["search"]["hits"][0]["hit"]
+        headers = {
+            "x-bamsdk-client-id": "disney-svod-9zmsiwec",
+            "x-bamsdk-platform": "javascript/windows/chrome",
+            "x-bamsdk-version": "32.6",
+            "x-dss-edge-accept": "vnd.dss.edge+json; version=2",
+            "x-dss-feature-filtering": "true",
+            "x-application-version": "1.1.2"
+        }
 
-        self.__release_date = item["releases"][0]["releaseDate"]
-        self.__encodedSeriesId = item["encodedSeriesId"]
+        res = Auth.make_request("POST", playback_link, data=data, headers=headers)
+        return res['stream']['sources'][0]['complete']["url"]
 
-    def _monkey_patch(self) -> None:
-        pass
-        # todo
-        # res = Auth.make_request("GET",
-        #     f"https://disney.content.edge.bamgrid.com/svc/content/DmcSeriesBundle/version/5.1/region/{APIConfig.region}/audience/false/maturity/1850/language/{APIConfig.language}/encodedSeriesId/106A3s2Armta")
-        # print(res)
-        # res = Auth.make_get_request(
-        #     f"https://disney.content.edge.bamgrid.com/svc/content/DmcSeriesBundle/version/5.1/region/{APIConfig.region}/audience/false/maturity/1850/language/{APIConfig.language}/encodedSeriesId/{self.encoded_series_id}")
-        #
-        # res_json = res.json()["data"]["DmcSeriesBundle"]
-        # self._full_description = res_json["series"]["text"]["description"]["full"]["series"]["default"]["content"]
-        # self._medium_description = res_json["series"]["text"]["description"]["medium"]["series"]["default"]["content"]
-        # self._brief_description = res_json["series"]["text"]["description"]["brief"]["series"]["default"]["content"]
-        #
-        # actors, directors, producers, creators = parse_participants(res_json["series"]["participant"])
-        # self._cast = actors
-        # self._directors = directors
-        # self._producers = producers
-        # self._creators = creators
-        #
-        # seasons = []
-        # for season_json in res_json["seasons"]["seasons"]:
-        #     season_id = season_json["seasonId"]
-        #     number = season_json["seasonSequenceNumber"]
-        #
-        #     season = Season(season_id=season_id, number=number)
-        #
-        #     season.release_date = season_json["releases"][0]["releaseDate"]
-        #     season.release_year = season_json["releases"][0]["releaseYear"]
-        #     season.rating = season_json["ratings"][0]["value"]
-        #     season.encoded_series_id = season_json["encodedSeriesId"]
-        #     season.series_id = season_json["seriesId"]
-        #
-        #     seasons.append(season)
-        #
-        # return seasons
+    def get_tracks(self) -> MediaTrackSelector:
+        url = self._get_m3u8_url()
+        return MediaTrackSelector(self.title, url)
 
     def __str__(self):
         return f"[Title={self.title}]"

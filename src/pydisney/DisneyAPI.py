@@ -161,7 +161,9 @@ class DisneyAPI:
         return parse_profile(profile)
 
     def set_active_profile(self, profile_id: str, pin: str = None) -> None:
-        self._auth.set_active_profile(APIConfig.token, profile_id, pin)
+        access_token, refresh_token = self._auth.set_active_profile(APIConfig.token, profile_id, pin)
+        APIConfig.token = access_token
+        APIConfig.refresh = refresh_token
 
     def _account_init(self):
         graphql_query = {

@@ -6,4 +6,4 @@ class LanguagePreferences:
         self.app = None
 
     def __str__(self):
-        return self.app
+        return f"LanguagePreferences[playback={self.playback}, subs={self.subtitle}, app={self.app}, subs_enabled={self.subs_enabled}]"

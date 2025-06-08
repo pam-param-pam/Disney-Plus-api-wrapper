@@ -66,9 +66,11 @@ def safe_get(d, keys, default=None, ignoreError=False):
         for key in keys:
             current = current[key]
         return current
-    except (KeyError, TypeError):
+    except (KeyError, TypeError) as e:
         if not ignoreError:
             logger.warning(f"Missing key: {''.join(f'[{key}]' for key in keys)}")
+            # if not default:
+            #     raise e
         return default
 
 

@@ -6,8 +6,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pydisney"
-version = "2.1.0"
-description = "A Feature rich API wrapper for Disney+ made with python."
+version = "3.0.0"
+description = "A Feature rich API wrapper for Disney+ made with python. Allows for subtitle and audio download"
 readme = "README.md"
 authors = [{ name = "Pamparampampam"}]
 license = { file = "LICENSE" }
@@ -16,9 +16,10 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
 ]
-keywords = ["disney", "disneyplus", "api", "wrapper", "client", "python", "pydisney"]
+keywords = ["disney", "disneyplus", "api", "wrapper", "client", "python", "pydisney", "subtitle", "subtitle-downloader", "downloader", "disney+"]
 dependencies = [
-    "requests >= 2.32.3"
+    "requests >= 2.32.3",
+    "m3u8 >= 3.6.0"
 ]
 requires-python = ">=3.7"
 

@@ -165,7 +165,6 @@ class Auth:
 
     @staticmethod
     def make_request(method: str, url: str, data: dict = None, headers: dict = None, params: dict = None, files: dict = None) -> dict:
-        logger.debug(f"Calling... Url={url}, Method={method}, Headers={headers}")
         default_headers = {
             'accept': 'application/vnd.media-service+json; version=6',
             'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
@@ -182,6 +181,9 @@ class Auth:
 
         if headers is None:
             headers = {}
+
+        logger.debug(f"Calling... Url={url}, Method={method}, Headers={headers}")
+
         headers.update(default_headers)
         response = requests.request(method, url, headers=headers, json=data, params=params, files=files)
 
