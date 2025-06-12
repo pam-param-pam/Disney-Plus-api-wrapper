@@ -181,7 +181,7 @@ class MediaTrackSelector:
                         uri=full_uri,
                         name=media.name,
                         group_id=media.group_id,
-                        forced=media.forced
+                        forced=media.forced == "YES"
                     )
                 )
             elif media.type == "AUDIO":

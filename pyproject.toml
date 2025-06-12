@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pydisney"
-version = "3.0.0"
+version = "3.0.1"
 description = "A Feature rich API wrapper for Disney+ made with python. Allows for subtitle and audio download"
 readme = "README.md"
 authors = [{ name = "Pamparampampam"}]
