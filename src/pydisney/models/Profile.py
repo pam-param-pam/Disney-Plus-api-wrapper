@@ -71,7 +71,7 @@ class Profile:
             "variables": {
                 "input": {
                     "appLanguage": language.value,
-                    "profileId": "3f596128-1035-4872-adea-1eeddf973625"
+                    "profileId": self.id
                 }
             },
             "operationName": "updateProfileAppLanguage"
