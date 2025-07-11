@@ -109,8 +109,12 @@ class Auth:
         if "Invalid PIN" in res.text:
             raise ProfileException(f"Wrong PIN={pin} for profile ID={profile_id}")
 
+        if "PIN set but not provided" in res.text:
+            raise ProfileException(f"profile ID={profile_id} is locked, PIN is required.")
+
         if not res.ok:
             raise AuthException(res)
+
         json_data = res.json()
         access_token = json_data["extensions"]["sdk"]["token"]["accessToken"]
         refresh_token = json_data["extensions"]["sdk"]["token"]["refreshToken"]
