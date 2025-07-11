@@ -26,9 +26,9 @@ logger.addHandler(console_handler)
 
 
 class DisneyAPI:
-    def __init__(self, email: str, password: str, force_login: bool = False):
+    def __init__(self, email: str, password: str, force_login: bool = False, profile_id: str = None, profile_pin: str = None):
 
-        self._auth = Auth(email=email, password=password, force_login=force_login)
+        self._auth = Auth(email=email, password=password, force_login=force_login, profile_id=profile_id, profile_pin=profile_pin)
         self._auth.get_auth_token()
 
         self.device_id = None
@@ -37,7 +37,7 @@ class DisneyAPI:
 
         self.account: Optional[Account] = None
         self._account_init()
-        self._session_init()
+        # self._session_init()
 
         APIConfig.region = "en" if self.account is None else self.account.country
         APIConfig.language = APIConfig.region

@@ -8,7 +8,7 @@ from typing import List
 import requests
 
 from .Config import APIConfig
-from .Exceptions import AuthException, ApiException
+from .Exceptions import AuthException, ApiException, ProfileException
 from .utils.helper import update_file
 
 logger = logging.getLogger("pydisney")
@@ -16,10 +16,13 @@ logger = logger.getChild("Auth")
 
 
 class Auth:
-    def __init__(self, email, password, force_login):
+    def __init__(self, email, password, force_login, profile_id, profile_pin):
         self._email = email
         self._force_login = force_login
         self._password = password
+        self._profile_id = profile_id
+        self._profile_pin = profile_pin
+
         APIConfig.auth = self
 
     def _obtain_client_api_key(self):
@@ -58,6 +61,8 @@ class Auth:
             }
         }
         res = APIConfig.session.post("https://disney.api.edge.bamgrid.com/graph/v1/device/graphql", json=graphql_query, headers={"Authorization": f"Bearer {client_api_key}"})
+        if not res.ok:
+            raise AuthException(res)
         json_data = res.json()
         access_token = json_data["extensions"]["sdk"]["token"]["accessToken"]
         return access_token
@@ -76,6 +81,8 @@ class Auth:
         }
 
         res = APIConfig.session.post("https://disney.api.edge.bamgrid.com/v1/public/graphql", json=graphql_query, headers={"Authorization": f"Bearer {access_token}"})
+        if not res.ok:
+            raise AuthException(res)
         json_data = res.json()
         profiles = json_data["data"]["login"]["account"]["profiles"]
         access_token = json_data["extensions"]["sdk"]["token"]["accessToken"]
@@ -83,33 +90,65 @@ class Auth:
 
     def set_active_profile(self, access_token, profile_id, pin=None):
         """Step 4. Set an active profile. Only access token returned here can be used to query data"""
+        input_data = {
+            "profileId": profile_id
+        }
+
+        if pin is not None:
+            input_data["entryPin"] = str(pin)
+
         graphql_mutation = {
             "query": """mutation switchProfile($input: SwitchProfileInput!) { switchProfile(switchProfile: $input) { account { ...account } } } fragment account on Account { id }""",
             "variables": {
-                "input": {
-                    "profileId": profile_id,
-                    "entryPin": pin
-                }
+                "input": input_data
             },
             "operationName": "switchProfile"
         }
         res = APIConfig.session.post("https://disney.api.edge.bamgrid.com/v1/public/graphql", json=graphql_mutation, headers={"Authorization": f"Bearer {access_token}"})
+        # Disney api returns 200 on wrong pin...
+        if "Invalid PIN" in res.text:
+            raise ProfileException(f"Wrong PIN={pin} for profile ID={profile_id}")
+
+        if not res.ok:
+            raise AuthException(res)
         json_data = res.json()
         access_token = json_data["extensions"]["sdk"]["token"]["accessToken"]
         refresh_token = json_data["extensions"]["sdk"]["token"]["refreshToken"]
         return access_token, refresh_token
 
-    def _get_valid_profile_id(self, profiles):
-        default_locked = False
+    def _get_valid_profile(self, profiles):
+        # Profile ID to use supplied
+        if self._profile_id:
+            for profile in profiles:
+                if self._profile_id == profile["id"]:
+                    is_locked = profile["attributes"]["parentalControls"]["isPinProtected"]
+                    if is_locked:
+                        if self._profile_pin:
+                            return profile["id"], self._profile_pin
+                        raise ProfileException(f"Profile '{self._profile_id}' is locked but no PIN was provided.")
+                    else:
+                        return profile["id"], None
+            raise ProfileException(f"Profile with ID={self._profile_id} not found.")
+
+        # No profile ID was provided, try to use default profile
         for profile in profiles:
             if profile["attributes"]["isDefault"]:
-                if profile["attributes"]["parentalControls"]["isPinProtected"]:
-                    default_locked = True
-                    logger.warning("Default profile is locked! Defaulting to a different one")
-            if default_locked and not profile["attributes"]["parentalControls"]["isPinProtected"]:
-                return profile["id"]
+                is_locked = profile["attributes"]["parentalControls"]["isPinProtected"]
+                if is_locked:
+                    if self._profile_pin:
+                        logger.warning("Default profile is locked! Using supplied PIN.")
+                        return profile["id"], self._profile_pin
+                    logger.info("Default profile is locked and no PIN provided. Will search for an unlocked profile.")
+                    break
 
-        raise AuthException("Unable to pick a profile: all profiles are locked. Manually set a profile and supply a PIN.")
+        # Try to find any other unlocked profile
+        for profile in profiles:
+            is_locked = profile["attributes"]["parentalControls"]["isPinProtected"]
+            if not is_locked:
+                return profile["id"], None
+
+        # If default was locked and no other profiles are available
+        raise ProfileException("No unlocked profiles available. All profiles are locked and no PIN was provided.")
 
     def _get_auth_token_tru_api(self):
         logger.info("Loging using disney's api")
@@ -118,8 +157,8 @@ class Auth:
         device_access_token = self._register_device(client_api_key)
         non_profile_access_token, profiles = self._login(device_access_token)
 
-        profile_id = self._get_valid_profile_id(profiles)
-        access_token, refresh_token = self.set_active_profile(non_profile_access_token, profile_id)
+        profile_id, profile_pin = self._get_valid_profile(profiles)
+        access_token, refresh_token = self.set_active_profile(non_profile_access_token, profile_id, profile_pin)
         APIConfig.token = access_token
         APIConfig.refresh = refresh_token
         update_file()
@@ -185,13 +224,12 @@ class Auth:
         logger.debug(f"Calling... Url={url}, Method={method}, Headers={headers}")
 
         headers.update(default_headers)
-        response = requests.request(method, url, headers=headers, json=data, params=params, files=files)
+        response = requests.request(method, url, headers=headers, json=data, params=params, files=files, timeout=10)
 
         if not response.ok:
             raise ApiException(response)
 
-        if response.status_code == 200:
-            return response.json()
+        return response.json()
 
     @staticmethod
     def make_pagination_request(method: str, url: str, data: dict = None, headers: dict = None, params: dict = None, files: dict = None) -> List[dict]:
