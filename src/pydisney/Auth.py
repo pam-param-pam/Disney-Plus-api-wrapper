@@ -140,9 +140,9 @@ class Auth:
                 is_locked = profile["attributes"]["parentalControls"]["isPinProtected"]
                 if is_locked:
                     if self._profile_pin:
-                        logger.warning("Default profile is locked! Using supplied PIN.")
+                        logger.info("Default profile is locked! Using supplied PIN.")
                         return profile["id"], self._profile_pin
-                    logger.info("Default profile is locked and no PIN provided. Will search for an unlocked profile.")
+                    logger.warning("Default profile is locked and no PIN provided. Will search for an unlocked profile.")
                     break
 
         # Try to find any other unlocked profile

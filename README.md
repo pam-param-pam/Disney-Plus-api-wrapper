@@ -57,7 +57,7 @@ else:
 from pydisney import DisneyAPI
 
 episode = api.search("Andor")[0].seasons[0].episodes[0]
-selector = episode.get_track_selector()
+selector = episode.get_tracks()
 
 print(selector.available_languages())
 
