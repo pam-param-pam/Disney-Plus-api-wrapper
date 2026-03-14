@@ -268,7 +268,8 @@ class Auth:
             aggregated_results.append(response_json)
 
             # Check if there are more pages
-            if pagination_values and pagination_values.get('hasMore', False):
+            if pagination_values and pagination_values.get('hasMore', False) and pagination_values.get(
+                    'totalCount') > limit:
                 current_offset += limit
             else:
                 break
