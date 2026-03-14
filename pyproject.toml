@@ -1,12 +1,12 @@
 # pyproject.toml
 
 [build-system]
-requires      = ["setuptools>=61.0.0", "wheel"]
+requires      = ["setuptools>=82.0.1", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pydisney"
-version = "3.0.2"
+version = "3.0.3"
 description = "A Feature rich API wrapper for Disney+ made with python. Allows for subtitle and audio download"
 readme = "README.md"
 authors = [{ name = "Pamparampampam"}]
@@ -18,8 +18,8 @@ classifiers = [
 ]
 keywords = ["disney", "disneyplus", "api", "wrapper", "client", "python", "pydisney", "subtitle", "subtitle-downloader", "downloader", "disney+"]
 dependencies = [
-    "requests >= 2.32.3",
-    "m3u8 >= 3.6.0"
+    "requests >= 2.32.5",
+    "m3u8 >= 6.0.0"
 ]
 requires-python = ">=3.7"
 
